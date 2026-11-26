@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { FolderSearch, HardDrive, Rows3, Settings2, type LucideIcon } from 'lucide-react'
 import type { DriveScanItem, DriveScanOutcome } from '@shared/types'
+import Logo from './components/Logo'
 import { useDriveScan } from './hooks/useDriveScan'
 import { useScanner, type ScannedFolder } from './hooks/useScanner'
 import PickFolder from './screens/PickFolder'
@@ -106,7 +107,10 @@ export default function App(): React.JSX.Element {
       <nav className="flex w-56 shrink-0 flex-col gap-0.5 border-r border-line bg-surface p-4" aria-label="Main">
         <div className="px-3 pb-6 pt-1">
           {/* The wordmark is set in mono, like the paths and sizes the app is about. */}
-          <p className="font-mono text-lg font-medium">Dirvo</p>
+          <p className="flex items-center gap-3 font-mono text-lg font-medium">
+            <Logo size={24} className="text-ink" />
+            Dirvo
+          </p>
           <p className="mt-1 text-xs text-ink-3">Mystery folders, explained</p>
         </div>
         {NAV.map(({ id, label, Icon }) => (

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Dirvo">
+  <!-- App icon: graphite tile, an off-white folder, and the four-colour ruling bar (the same bar the app uses to split space by verdict). -->
+  <rect width="256" height="256" rx="58" fill="#0e0e10"/>
+  <rect x="44" y="64" width="76" height="40" rx="12" fill="#ededee"/>
+  <rect x="44" y="82" width="168" height="110" rx="14" fill="#ededee"/>
+  <rect x="64" y="148" width="29" height="18" rx="4" fill="#10b981"/>
+  <rect x="97" y="148" width="29" height="18" rx="4" fill="#0ea5e9"/>
+  <rect x="130" y="148" width="29" height="18" rx="4" fill="#f59e0b"/>
+  <rect x="163" y="148" width="29" height="18" rx="4" fill="#ef4444"/>
+</svg>

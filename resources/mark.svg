@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 60 176 136" width="176" height="136" role="img" aria-label="Dirvo">
+  <!-- The same mark without the tile. The folder takes the surrounding text colour; the bar keeps the verdict colours. -->
+  <rect x="44" y="64" width="76" height="40" rx="12" fill="currentColor"/>
+  <rect x="44" y="82" width="168" height="110" rx="14" fill="currentColor"/>
+  <rect x="64" y="148" width="29" height="18" rx="4" fill="#10b981"/>
+  <rect x="97" y="148" width="29" height="18" rx="4" fill="#0ea5e9"/>
+  <rect x="130" y="148" width="29" height="18" rx="4" fill="#f59e0b"/>
+  <rect x="163" y="148" width="29" height="18" rx="4" fill="#ef4444"/>
+</svg>

@@ -1,3 +1,5 @@
+<img src="resources/logo.svg" alt="Dirvo logo" width="96" height="96">
+
 # Dirvo
 
 **Mystery folders, explained.** Dirvo is a Windows desktop app that tells you what a folder is, which app made it, how big it is, whether it is safe to delete, and what happens if you delete it.
@@ -103,6 +105,7 @@ To use AI explanations, open **Settings**, pick a provider and paste its API key
 | `npm run typecheck` | Typecheck main, preload and renderer |
 | `npm test` | Run the test suite once |
 | `npm run test:watch` | Run tests in watch mode |
+| `npm run icons` | Regenerate `resources/icon.png` and `resources/icon.ico` from `resources/logo.svg` |
 
 Dirvo is not packaged as an installer yet. Run it from source as above.
 

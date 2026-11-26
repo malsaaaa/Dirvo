@@ -7,6 +7,8 @@ import { AiSettingsStore, SettingsError } from './ai/provider-settings'
 import { EncryptionUnavailableError, KeyFormatError, KeyStore } from './ai/key-store'
 import { explainWithAi, testApiKey } from './ai/service'
 import workerPath from './scanner/worker?modulePath'
+// `?asset` copies the file into the build and gives its path, in development and when packaged.
+import appIcon from '../../resources/icon.ico?asset'
 import { startScan } from './scanner/scanner'
 import { scanDrive } from './scanner/drive-scan'
 import { explainPath } from './knowledge/explain'
@@ -32,6 +34,8 @@ function createWindow(): void {
     show: false,
     // Matches the dark theme, which is the default, so there is no white flash on start.
     backgroundColor: '#0e0e10',
+    // Title bar and taskbar icon (replaces the default Electron icon).
+    icon: appIcon,
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -249,6 +253,8 @@ function registerIpc(): void {
 }
 
 app.whenReady().then(() => {
+  // Gives Dirvo its own identity in the Windows taskbar, so it shows its own icon and is not grouped with Electron.
+  app.setAppUserModelId('com.dirvo.app')
   registerIpc()
   createWindow()
   app.on('activate', () => {
