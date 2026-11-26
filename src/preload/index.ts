@@ -7,7 +7,9 @@ const api: DirvoApi = {
   copyPath: (path) => ipcRenderer.invoke('clipboard:copyPath', path),
   scanFolder: (scanId, path) => ipcRenderer.invoke('scan:start', scanId, path),
   cancelScan: (scanId) => ipcRenderer.invoke('scan:cancel', scanId),
-  explainFolder: (path) => ipcRenderer.invoke('folder:explain', path),
+  pickFolder: () => ipcRenderer.invoke('dialog:pickFolder'),
+  listDrives: () => ipcRenderer.invoke('drives:list'),
+  explainFolder:(path) => ipcRenderer.invoke('folder:explain', path),
   onScanProgress: (cb) => {
     const listener = (_e: Electron.IpcRendererEvent, scanId: string, progress: ScanProgress): void =>
       cb(scanId, progress)

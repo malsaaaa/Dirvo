@@ -56,6 +56,10 @@ export interface DirvoApi {
   /** scanId is chosen by the caller so it can cancel before the promise settles. */
   scanFolder: (scanId: string, path: string) => Promise<ScanOutcome>
   cancelScan: (scanId: string) => Promise<void>
+  /** Opens the Windows folder picker. Null if the user cancels. */
+  pickFolder: () => Promise<string | null>
+  /** Drive roots that exist on this PC, e.g. ["C:\\", "D:\\"]. */
+  listDrives: () => Promise<string[]>
   /** Offline lookup: system rules, then the known-folder database. Null means unknown. */
   explainFolder: (path: string) => Promise<FolderExplanation | null>
   /** Returns an unsubscribe function. */

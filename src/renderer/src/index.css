@@ -1,6 +1,27 @@
 @import 'tailwindcss';
 
+@keyframes slide {
+  0% {
+    margin-left: -35%;
+  }
+  100% {
+    margin-left: 100%;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   @apply bg-slate-50 text-slate-900 antialiased;
   font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  @apply outline-2 outline-offset-2 outline-indigo-500;
 }

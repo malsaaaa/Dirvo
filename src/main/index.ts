@@ -1,5 +1,6 @@
-import { app, BrowserWindow, clipboard, ipcMain, shell } from 'electron'
-import { isAbsolute, join } from 'node:path'
+import { app, BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron'
+import { promises as fsp } from 'node:fs'
+import { isAbsolute, join, normalize } from 'node:path'
 import workerPath from './scanner/worker?modulePath'
 import { startScan, type ScanHandle } from './scanner/scanner'
 import { explainPath } from './knowledge/explain'
@@ -50,7 +51,8 @@ function registerIpc(): void {
     if (activeScans.has(scanId)) return { status: 'error', message: 'Scan already running' }
 
     const sender = e.sender
-    const handle = startScan(workerPath, path, (progress) => {
+    // Pasted paths may use "/" or have a trailing slash; the folder picker always gives "\".
+    const handle = startScan(workerPath, normalize(path), (progress) => {
       if (!sender.isDestroyed()) sender.send('scan:progress', scanId, progress)
     })
     activeScans.set(scanId, handle)
@@ -61,7 +63,27 @@ function registerIpc(): void {
     }
   })
 
-  ipcMain.handle('folder:explain', (_e, path: unknown): FolderExplanation | null => {
+  ipcMain.handle('dialog:pickFolder', async (e): Promise<string | null> => {
+    const win = BrowserWindow.fromWebContents(e.sender)
+    const options = { title: 'Choose a folder to explain', properties: ['openDirectory' as const] }
+    const result = win ? await dialog.showOpenDialog(win, options) : await dialog.showOpenDialog(options)
+    return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle('drives:list', async (): Promise<string[]> => {
+    const letters = 'CDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+    const found = await Promise.all(
+      letters.map((l) =>
+        fsp.access(`${l}:\\`).then(
+          () => `${l}:\\`,
+          () => null
+        )
+      )
+    )
+    return found.filter((d): d is string => d !== null)
+  })
+
+  ipcMain.handle('folder:explain',(_e, path: unknown): FolderExplanation | null => {
     if (typeof path !== 'string' || !isAbsolute(path)) throw new Error('Invalid path')
     return explainPath(path)
   })
