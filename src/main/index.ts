@@ -1,10 +1,14 @@
-import { app, BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron'
 import { promises as fsp } from 'node:fs'
-import { isAbsolute, join, normalize } from 'node:path'
+import { homedir, userInfo } from 'node:os'
+import { basename, isAbsolute, join, normalize } from 'node:path'
+import { AiCache } from './ai/cache'
+import { EncryptionUnavailableError, KeyFormatError, KeyStore } from './ai/key-store'
+import { explainWithAi, testApiKey } from './ai/service'
 import workerPath from './scanner/worker?modulePath'
 import { startScan, type ScanHandle } from './scanner/scanner'
 import { explainPath } from './knowledge/explain'
-import type { FolderExplanation, ScanOutcome } from '../shared/types'
+import type { ActionResult, FolderExplanation, KeyStatus, ScanOutcome } from '../shared/types'
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -88,7 +92,48 @@ function registerIpc(): void {
     return explainPath(path)
   })
 
-  ipcMain.handle('scan:cancel',(_e, scanId: unknown) => {
+  // --- AI fallback and settings. The API key only ever lives in this process. ---
+  const keyStore = new KeyStore(join(app.getPath('userData'), 'anthropic-key.bin'), safeStorage)
+  const aiCache = new AiCache(join(app.getPath('userData'), 'ai-cache.json'))
+  const usernames = (): string[] => {
+    const names = [process.env['USERNAME'] ?? '', basename(homedir())]
+    try {
+      names.push(userInfo().username)
+    } catch {
+      // userInfo can throw on unusual accounts; the Users\<name> path rule still applies.
+    }
+    return names
+  }
+
+  ipcMain.handle('ai:explain', (_e, metadata: unknown) => explainWithAi(metadata, { keyStore, cache: aiCache, usernames }))
+
+  ipcMain.handle(
+    'settings:keyStatus',
+    async (): Promise<KeyStatus> => ({
+      hasKey: await keyStore.hasKey(),
+      encryptionAvailable: keyStore.encryptionAvailable()
+    })
+  )
+
+  ipcMain.handle('settings:saveKey', async (_e, key: unknown): Promise<ActionResult> => {
+    if (typeof key !== 'string') return { ok: false, message: 'Invalid key' }
+    try {
+      await keyStore.save(key)
+      return { ok: true, message: 'API key saved and encrypted.' }
+    } catch (err) {
+      if (err instanceof KeyFormatError || err instanceof EncryptionUnavailableError) return { ok: false, message: err.message }
+      return { ok: false, message: 'Could not save the key.' }
+    }
+  })
+
+  ipcMain.handle('settings:removeKey', async (): Promise<ActionResult> => {
+    await keyStore.remove()
+    return { ok: true, message: 'API key removed.' }
+  })
+
+  ipcMain.handle('settings:testKey', () => testApiKey({ keyStore }))
+
+  ipcMain.handle('scan:cancel', (_e, scanId: unknown) => {
     if (typeof scanId === 'string') activeScans.get(scanId)?.cancel()
   })
 

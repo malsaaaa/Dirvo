@@ -28,7 +28,61 @@ function Stat({ label, value }: { label: string; value: string }): React.JSX.Ele
   )
 }
 
-export default function DetailCard({ item }: { item: ScannedFolder }): React.JSX.Element {
+interface Props {
+  item: ScannedFolder
+  onRetryAi: () => void
+  onOpenSettings: () => void
+}
+
+function UnknownPanel({ item, onRetryAi, onOpenSettings }: Props): React.JSX.Element {
+  const base = 'rounded-lg border p-4 text-sm'
+  if (item.aiStatus === 'loading') {
+    return (
+      <div className={`${base} border-indigo-200 bg-indigo-50 text-indigo-900`} aria-live="polite">
+        <p className="font-semibold">Asking Claude about this folder…</p>
+        <p className="mt-0.5">Only its name, size, counts and a few file names are sent. Never file contents.</p>
+      </div>
+    )
+  }
+  if (item.aiStatus === 'no-key') {
+    return (
+      <div className={`${base} border-slate-200 bg-slate-50 text-slate-700`}>
+        <p className="font-semibold">Dirvo doesn&apos;t recognise this folder</p>
+        <p className="mt-0.5">
+          Add an Anthropic API key and Dirvo can ask Claude to explain it. Until then, treat it as important and check
+          the file names below for clues.
+        </p>
+        <button onClick={onOpenSettings} className="mt-3 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500">
+          Open Settings
+        </button>
+      </div>
+    )
+  }
+  if (item.aiStatus === 'error') {
+    return (
+      <div role="alert" className={`${base} border-red-200 bg-red-50 text-red-900`}>
+        <p className="font-semibold">Could not get an explanation</p>
+        <p className="mt-0.5">{item.aiError}</p>
+        <div className="mt-3 flex gap-2">
+          <button onClick={onRetryAi} className="rounded-md bg-red-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-600">
+            Try again
+          </button>
+          <button onClick={onOpenSettings} className="rounded-md border border-red-300 px-3 py-1.5 text-sm hover:bg-red-100">
+            Open Settings
+          </button>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className={`${base} border-slate-200 bg-slate-50 text-slate-700`}>
+      <p className="font-semibold">Dirvo doesn&apos;t recognise this folder</p>
+      <p className="mt-0.5">Treat it as important until you know what created it.</p>
+    </div>
+  )
+}
+
+export default function DetailCard({ item, onRetryAi, onOpenSettings }: Props): React.JSX.Element {
   const { metadata: m, explanation: e } = item
   const [feedback, setFeedback] = useState('')
 
@@ -56,13 +110,14 @@ export default function DetailCard({ item }: { item: ScannedFolder }): React.JSX
           <p className="mt-0.5 text-sm opacity-90">{VERDICT_STYLE[e.verdict].meaning}</p>
         </div>
       ) : (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-          <p className="font-semibold">Dirvo doesn&apos;t recognise this folder yet</p>
-          <p className="mt-0.5">
-            It is not in the offline database. Treat it as important until you know what created it, and check the
-            file names below for clues.
-          </p>
-        </div>
+        <UnknownPanel item={item} onRetryAi={onRetryAi} onOpenSettings={onOpenSettings} />
+      )}
+
+      {e && e.downgradedFrom && (
+        <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          The AI was not confident, so Dirvo changed its verdict from &ldquo;{VERDICT_STYLE[e.downgradedFrom].label}&rdquo; to
+          &ldquo;{VERDICT_STYLE[e.verdict].label}&rdquo;.
+        </p>
       )}
 
       {e && (
@@ -72,6 +127,7 @@ export default function DetailCard({ item }: { item: ScannedFolder }): React.JSX
           <Section title="If you delete it">{e.consequenceIfDeleted}</Section>
           <p className="text-xs text-slate-500">
             {SOURCE_LABEL[e.source]} · {e.confidence.toLowerCase()} confidence
+            {e.source === 'ai' && ' · an estimate from metadata only, so double-check before deleting'}
           </p>
         </div>
       )}

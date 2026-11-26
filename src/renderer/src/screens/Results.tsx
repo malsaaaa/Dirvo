@@ -8,9 +8,19 @@ interface Props {
   onSelect: (path: string) => void
   onClear: () => void
   onGoPick: () => void
+  onRetryAi: (path: string) => void
+  onOpenSettings: () => void
 }
 
-export default function Results({ items, selectedPath, onSelect, onClear, onGoPick }: Props): React.JSX.Element {
+export default function Results({
+  items,
+  selectedPath,
+  onSelect,
+  onClear,
+  onGoPick,
+  onRetryAi,
+  onOpenSettings
+}: Props): React.JSX.Element {
   if (items.length === 0) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-3 p-16 text-center">
@@ -40,7 +50,12 @@ export default function Results({ items, selectedPath, onSelect, onClear, onGoPi
       </aside>
       <section className="min-w-0 flex-1 overflow-y-auto p-8">
         <div className="mx-auto max-w-2xl">
-          <DetailCard key={selected.metadata.path} item={selected} />
+          <DetailCard
+            key={selected.metadata.path}
+            item={selected}
+            onRetryAi={() => onRetryAi(selected.metadata.path)}
+            onOpenSettings={onOpenSettings}
+          />
         </div>
       </section>
     </div>

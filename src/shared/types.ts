@@ -13,6 +13,24 @@ export interface FolderExplanation {
   source: ExplanationSource
   /** Id of the system rule or database entry that matched, when there is one. */
   matchedId?: string
+  /** Set when low AI confidence made Dirvo lower the verdict. This is what the AI originally said. */
+  downgradedFrom?: Verdict
+}
+
+export type AiExplainResult =
+  | { status: 'ok'; explanation: FolderExplanation; cached: boolean }
+  | { status: 'no-key' }
+  | { status: 'error'; message: string }
+
+export interface KeyStatus {
+  hasKey: boolean
+  /** False if Windows cannot encrypt secrets for this user. Dirvo then refuses to store a key. */
+  encryptionAvailable: boolean
+}
+
+export interface ActionResult {
+  ok: boolean
+  message: string
 }
 
 /** Metadata about a folder. Collected without ever reading file contents. */
@@ -62,6 +80,13 @@ export interface DirvoApi {
   listDrives: () => Promise<string[]>
   /** Offline lookup: system rules, then the known-folder database. Null means unknown. */
   explainFolder: (path: string) => Promise<FolderExplanation | null>
+  /** Asks the AI about a folder Dirvo does not know. Only sanitised metadata leaves the PC. */
+  aiExplain: (metadata: FolderMetadata) => Promise<AiExplainResult>
+  getKeyStatus: () => Promise<KeyStatus>
+  /** The key goes to the main process and is stored encrypted. It is never sent back. */
+  saveApiKey: (key: string) => Promise<ActionResult>
+  removeApiKey: () => Promise<ActionResult>
+  testApiKey: () => Promise<ActionResult>
   /** Returns an unsubscribe function. */
   onScanProgress: (cb: (scanId: string, progress: ScanProgress) => void) => () => void
 }

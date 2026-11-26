@@ -10,6 +10,11 @@ const api: DirvoApi = {
   pickFolder: () => ipcRenderer.invoke('dialog:pickFolder'),
   listDrives: () => ipcRenderer.invoke('drives:list'),
   explainFolder:(path) => ipcRenderer.invoke('folder:explain', path),
+  aiExplain: (metadata) => ipcRenderer.invoke('ai:explain', metadata),
+  getKeyStatus: () => ipcRenderer.invoke('settings:keyStatus'),
+  saveApiKey: (key) => ipcRenderer.invoke('settings:saveKey', key),
+  removeApiKey: () => ipcRenderer.invoke('settings:removeKey'),
+  testApiKey: () => ipcRenderer.invoke('settings:testKey'),
   onScanProgress: (cb) => {
     const listener = (_e: Electron.IpcRendererEvent, scanId: string, progress: ScanProgress): void =>
       cb(scanId, progress)

@@ -6,10 +6,15 @@ export type ScannerState =
   | { status: 'scanning'; path: string; progress: ScanProgress | null }
   | { status: 'error'; message: string }
 
+/** 'none': nothing pending. 'loading': asking the AI. 'no-key': AI needed but no API key saved. */
+export type AiStatus = 'none' | 'loading' | 'no-key' | 'error'
+
 export interface ScannedFolder {
   metadata: FolderMetadata
-  /** Null when Dirvo does not recognise the folder. */
+  /** Null while unknown (offline lookup found nothing and the AI has not answered). */
   explanation: FolderExplanation | null
+  aiStatus: AiStatus
+  aiError?: string
 }
 
 /** Runs one folder scan at a time and reports the finished result to `onDone`. */
@@ -43,7 +48,7 @@ export function useScanner(onDone: (item: ScannedFolder) => void): {
       if (outcome.status === 'done') {
         const explanation = await window.dirvo.explainFolder(outcome.result.path)
         setState({ status: 'idle' })
-        onDoneRef.current({ metadata: outcome.result, explanation })
+        onDoneRef.current({ metadata: outcome.result, explanation, aiStatus: 'none' })
       } else if (outcome.status === 'cancelled') {
         setState({ status: 'idle' })
       } else {
