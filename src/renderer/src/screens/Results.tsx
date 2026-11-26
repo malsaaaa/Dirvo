@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { Download } from 'lucide-react'
+import { CircleHelp, Download } from 'lucide-react'
 import Button from '../components/Button'
 import DetailCard from '../components/DetailCard'
+import ExplainAllDialog from '../components/ExplainAllDialog'
 import ExportDialog, { type ExportChoice } from '../components/ExportDialog'
 import ReclaimBand from '../components/ReclaimBand'
 import LedgerToolbar from '../components/LedgerToolbar'
 import ResultsList from '../components/ResultsList'
 import type { BreakdownControls } from '../hooks/useDriveScan'
+import type { BatchControls } from '../lib/batch'
 import type { ScannedFolder } from '../hooks/useScanner'
 import { formatCount } from '../lib/format'
 import { changesSince, scanSpan } from '../lib/history'
@@ -25,6 +27,7 @@ interface Props {
   onOpenSettings: () => void
   breakdown: BreakdownControls
   onRescan: (path: string) => void
+  batch: BatchControls
   /** Whether the export dialog is open. Owned by the app so Ctrl+E can open it. */
   exportOpen: boolean
   onExportOpenChange: (open: boolean) => void
@@ -47,6 +50,7 @@ export default function Results({
   onOpenSettings,
   breakdown,
   onRescan,
+  batch,
   exportOpen,
   onExportOpenChange,
   searchRef,
@@ -57,6 +61,7 @@ export default function Results({
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const [savedReport, setSavedReport] = useState<string | null>(null)
+  const [explainAllOpen, setExplainAllOpen] = useState(false)
 
   if (items.length === 0) {
     return (
@@ -118,6 +123,13 @@ export default function Results({
               </span>
             </h1>
             <div className="flex items-center">
+              {batch.unknownCount > 0 && !batch.running && (
+                <Button variant="ghost" onClick={() => setExplainAllOpen(true)} className="h-8 text-xs">
+                  <CircleHelp size={14} strokeWidth={1.5} aria-hidden />
+                  Explain unknown
+                  <span className="font-mono tabular-nums text-ink-3">{batch.unknownCount}</span>
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 onClick={() => {
@@ -134,6 +146,41 @@ export default function Results({
               </Button>
             </div>
           </div>
+          {batch.running && (
+            <div className="mx-4 mb-3 flex items-center justify-between gap-3 rounded-lg border border-line bg-hover px-3 py-2 text-xs" role="status" aria-live="polite">
+              <span className="min-w-0 truncate">
+                Explaining unknown folders…{' '}
+                <span className="font-mono tabular-nums text-ink-3">
+                  {batch.running.done} of {batch.running.total}
+                </span>
+                {batch.running.failed > 0 && <span className="text-ink-3"> · {batch.running.failed} failed</span>}
+              </span>
+              <button type="button" onClick={batch.cancel} className="shrink-0 rounded-md px-2 py-1 font-medium underline-offset-2 hover:underline">
+                Cancel
+              </button>
+            </div>
+          )}
+          {!batch.running && batch.result && (
+            <div
+              className={`mx-4 mb-3 flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-xs ${
+                batch.result.stopped === 'no-key' || batch.result.stopped === 'errors' ? 'bg-warn-bg text-warn-ink' : 'bg-ok-bg text-ok-ink'
+              }`}
+              role="status"
+            >
+              <span className="min-w-0">
+                {batch.result.stopped === 'no-key'
+                  ? 'Stopped: there is no API key for this provider. Add one in Settings.'
+                  : batch.result.stopped === 'errors'
+                    ? `Stopped after ${batch.result.ok} explained: the AI kept failing. Check Settings, then try again.`
+                    : batch.result.stopped === 'cancelled'
+                      ? `Cancelled after ${batch.result.ok} explained.`
+                      : `Explained ${batch.result.ok} of ${batch.result.total} folders${batch.result.failed > 0 ? `, ${batch.result.failed} failed` : ''}.`}
+              </span>
+              <button type="button" onClick={batch.dismissResult} className="shrink-0 rounded-md px-2 py-1 font-medium underline-offset-2 hover:underline">
+                Dismiss
+              </button>
+            </div>
+          )}
           {savedReport && (
             <div className="mx-4 mb-3 flex items-center justify-between gap-3 rounded-lg bg-ok-bg px-3 py-2 text-xs text-ok-ink" role="status">
               <span className="min-w-0 truncate">Report saved: {savedReport.split('\\').pop()}</span>
@@ -177,6 +224,21 @@ export default function Results({
           />
         </aside>
       </div>
+      {explainAllOpen && (
+        <ExplainAllDialog
+          count={Math.min(batch.unknownCount, batch.cap)}
+          unknownCount={batch.unknownCount}
+          onCancel={() => setExplainAllOpen(false)}
+          onConfirm={() => {
+            setExplainAllOpen(false)
+            batch.start()
+          }}
+          onOpenSettings={() => {
+            setExplainAllOpen(false)
+            onOpenSettings()
+          }}
+        />
+      )}
       {exportOpen && (
         <ExportDialog
           totalCount={items.length}

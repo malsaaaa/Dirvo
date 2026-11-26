@@ -6,6 +6,7 @@ import Logo from './components/Logo'
 import ShortcutsDialog from './components/ShortcutsDialog'
 import Toast from './components/Toast'
 import { useDriveScan, type BreakdownControls, type ScanKind } from './hooks/useDriveScan'
+import { BATCH_CONCURRENCY, MAX_BATCH, countUnknown, pickUnknown, runBatch, type BatchControls, type BatchProgress, type BatchSummary, type ExplainOutcome } from './lib/batch'
 import { recordScan, type History } from './lib/history'
 import { DEFAULT_VIEW, applyView, type LedgerView } from './lib/ledger-view'
 import { keyToAction, movedIndex, type ShortcutAction } from './lib/shortcuts'
@@ -74,17 +75,25 @@ export default function App(): React.JSX.Element {
 
   /** Asks the AI about a folder Dirvo does not know. Only called when the offline lookup found nothing. */
   const runAi = useCallback(
-    async (path: string, knownMetadata?: ScannedFolder['metadata']) => {
+    async (path: string, knownMetadata?: ScannedFolder['metadata']): Promise<ExplainOutcome> => {
       const metadata = knownMetadata ?? itemsRef.current.find((i) => i.metadata.path === path)?.metadata
-      if (!metadata) return
+      if (!metadata) return 'error'
       patch(path, { aiStatus: 'loading', aiError: undefined })
       try {
         const r = await window.dirvo.aiExplain(metadata)
-        if (r.status === 'ok') patch(path, { explanation: r.explanation, aiStatus: 'none' })
-        else if (r.status === 'no-key') patch(path, { aiStatus: 'no-key' })
-        else patch(path, { aiStatus: 'error', aiError: r.message })
+        if (r.status === 'ok') {
+          patch(path, { explanation: r.explanation, aiStatus: 'none' })
+          return 'ok'
+        }
+        if (r.status === 'no-key') {
+          patch(path, { aiStatus: 'no-key' })
+          return 'no-key'
+        }
+        patch(path, { aiStatus: 'error', aiError: r.message })
+        return 'error'
       } catch {
         patch(path, { aiStatus: 'error', aiError: 'Something went wrong while asking the AI.' })
+        return 'error'
       }
     },
     [patch]
@@ -289,6 +298,44 @@ export default function App(): React.JSX.Element {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // ---- Explain unknown folders: a capped, confirmed, cancellable run through the same path as one folder.
+  const [batchRunning, setBatchRunning] = useState<BatchProgress | null>(null)
+  const [batchResult, setBatchResult] = useState<BatchSummary | null>(null)
+  const batchCancelled = useRef(false)
+  const batchActive = useRef(false)
+
+  const startBatch = useCallback(async () => {
+    if (batchActive.current) return
+    const paths = pickUnknown(itemsRef.current)
+    if (paths.length === 0) return
+    batchActive.current = true
+    batchCancelled.current = false
+    setBatchResult(null)
+    try {
+      const summary = await runBatch(paths, (p) => runAi(p), {
+        concurrency: BATCH_CONCURRENCY,
+        isCancelled: () => batchCancelled.current,
+        onProgress: setBatchRunning
+      })
+      setBatchResult(summary)
+    } finally {
+      batchActive.current = false
+      setBatchRunning(null)
+    }
+  }, [runAi])
+
+  const batch: BatchControls = {
+    unknownCount: countUnknown(items),
+    cap: MAX_BATCH,
+    running: batchRunning,
+    result: batchResult,
+    start: () => void startBatch(),
+    cancel: () => {
+      batchCancelled.current = true
+    },
+    dismissResult: () => setBatchResult(null)
+  }
+
   const unknownWaiting = items.filter((i) => i.aiStatus === 'no-key').length
 
   return (
@@ -370,6 +417,7 @@ export default function App(): React.JSX.Element {
             onOpenSettings={() => setScreen('settings')}
             breakdown={breakdown}
             onRescan={(p) => void scanner.start(p)}
+            batch={batch}
             exportOpen={exportOpen}
             onExportOpenChange={setExportOpen}
             searchRef={searchRef}
