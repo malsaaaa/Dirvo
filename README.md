@@ -38,7 +38,7 @@ Pick a folder, or scan a whole drive. Dirvo reads only folder metadata (names, s
    | `REBUILDS_AUTOMATICALLY` | `LOW` | `CAUTION` |
    | anything else | any | unchanged |
 
-   These rules are the same for every provider. Answers are cached locally for 30 days, per provider and model.
+   A **SAFE** or **REBUILDS_AUTOMATICALLY** verdict is also moved to `CAUTION` when the AI's own explanation says deleting will break, lose or uninstall something. Small models sometimes contradict themselves, and the warning in the text wins over the label. These rules are the same for every provider. Answers are cached locally for 30 days, per provider and model.
 
 For a drive scan, Dirvo splits "container" folders (drive root, Windows, Users, a profile, AppData, ...) into their subfolders and scans each one, three at a time. Folders under 50 MB are counted but not listed. Unknown folders get an **Explain with AI** button instead of being sent automatically.
 
@@ -123,7 +123,7 @@ tests/                      Vitest tests
 
 `npm test` covers the scanner, the path matcher and database, the system-path rules, the drive scan logic, and the AI layer (redaction, response validation, confidence policy, key storage, cache and service, all with a fake network).
 
-The AI layer is tested with a fake network for every provider's request and response format. It has **not** been run against the live APIs with real keys. Only Anthropic's "key rejected" error path was checked against its real endpoint, and the Ollama "not running" path against a real closed port. The default model names are best guesses, so verify them with **Test connection**.
+The AI layer is tested with a fake network for every provider's request and response format. It has **not** been run against the hosted APIs with real keys. Only Anthropic's "key rejected" error path was checked against its real endpoint. Ollama was tested end to end with a real local model (`qwen3.5:4b`): connection test, explanation of an unknown folder, and the "not running" error. That run showed that thinking models can use their whole output budget before answering, which is why Dirvo turns thinking off for Ollama and gives every provider a large output budget. It also showed a 4B model can give shaky explanations, which is what the contradiction check is for. The default model names for hosted providers are best guesses, so verify them with **Test connection**.
 
 ## Adding a known folder
 

@@ -114,8 +114,10 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings }: Props): 
 
       {e && e.downgradedFrom && (
         <p className="rounded-lg bg-warn-bg px-4 py-3 text-xs text-warn-ink">
-          The AI was not confident, so Dirvo changed its verdict from &ldquo;{VERDICT_STYLE[e.downgradedFrom].label}&rdquo; to
-          &ldquo;{VERDICT_STYLE[e.verdict].label}&rdquo;
+          {e.downgradeReason === 'contradiction'
+            ? 'The AI called this safe, but its own explanation says deleting it can cause problems, so Dirvo changed its verdict'
+            : 'The AI was not confident, so Dirvo changed its verdict'}{' '}
+          from &ldquo;{VERDICT_STYLE[e.downgradedFrom].label}&rdquo; to &ldquo;{VERDICT_STYLE[e.verdict].label}&rdquo;
         </p>
       )}
 

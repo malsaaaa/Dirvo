@@ -28,6 +28,11 @@ export interface ProviderInfo {
   keyPlaceholder: string
   /** OpenAI's newer models want max_completion_tokens; most others still use max_tokens. */
   tokenParam: 'max_tokens' | 'max_completion_tokens'
+  /**
+   * Extra fields added to every OpenAI-format request. Ollama uses this to turn off "thinking":
+   * a thinking model can spend its whole output budget reasoning and return an empty answer.
+   */
+  extraBody?: Record<string, unknown>
 }
 
 // Default model names are best guesses at small, cheap, current models. Model names change often,
@@ -130,7 +135,8 @@ export const PROVIDERS: ProviderInfo[] = [
     defaultBaseUrl: 'http://localhost:11434/v1',
     baseUrlEditable: true,
     keyPlaceholder: '',
-    tokenParam: 'max_tokens'
+    tokenParam: 'max_tokens',
+    extraBody: { reasoning_effort: 'none' }
   },
   {
     id: 'custom',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AiValidationError, applyConfidencePolicy, parseAiAnswer, toExplanation } from '../src/main/ai/validate'
+import { AiValidationError, applyConfidencePolicy, contradictsSafety, parseAiAnswer, toExplanation } from '../src/main/ai/validate'
 import type { Confidence, Verdict } from '../src/shared/types'
 
 const good = {
@@ -95,5 +95,51 @@ describe('toExplanation', () => {
     const e = toExplanation({ ...good } as never)
     expect(e.verdict).toBe('REBUILDS_AUTOMATICALLY')
     expect(e.downgradedFrom).toBeUndefined()
+  })
+})
+
+describe('contradiction guard (a "safe" verdict whose own text warns of damage)', () => {
+  it.each([
+    'Deleting this folder will break the Ollama app on your system.',
+    'The program stops working and must be reinstalled.',
+    'You will lose your saved games.',
+    'Settings are permanently removed.',
+    'The app will no longer start until you uninstall and reinstall it.',
+    'It could corrupt the database.',
+    'A fresh download and installation of the program is required.'
+  ])('flags: %s', (text) => expect(contradictsSafety(text)).toBe(true))
+
+  it.each([
+    'The app recreates it automatically on the next run.',
+    'Pages load slower at first while the cache refills.',
+    'Nothing of yours is lost.',
+    'This will not break anything.',
+    'There is no data loss. npm downloads the packages again.',
+    'Packages are downloaded again when needed.'
+  ])('does not flag reassurance: %s', (text) => expect(contradictsSafety(text)).toBe(false))
+
+  const base = { whatItIs: 'x', createdBy: 'y', confidence: 'HIGH' as const }
+
+  it('moves a confident SAFE answer to CAUTION when its explanation warns of breakage', () => {
+    const e = toExplanation({ ...base, verdict: 'SAFE', consequenceIfDeleted: 'Deleting this will break the app.' })
+    expect(e).toMatchObject({ verdict: 'CAUTION', downgradedFrom: 'SAFE', downgradeReason: 'contradiction' })
+  })
+
+  it('does the same for REBUILDS_AUTOMATICALLY', () => {
+    const e = toExplanation({ ...base, verdict: 'REBUILDS_AUTOMATICALLY', consequenceIfDeleted: 'You would lose your settings.' })
+    expect(e).toMatchObject({ verdict: 'CAUTION', downgradeReason: 'contradiction' })
+  })
+
+  it('leaves CAUTION and DONT_TOUCH alone, and clean answers alone', () => {
+    expect(toExplanation({ ...base, verdict: 'DONT_TOUCH', consequenceIfDeleted: 'Windows will break.' }).verdict).toBe('DONT_TOUCH')
+    expect(toExplanation({ ...base, verdict: 'CAUTION', consequenceIfDeleted: 'It will break.' }).downgradedFrom).toBeUndefined()
+    const ok = toExplanation({ ...base, verdict: 'SAFE', consequenceIfDeleted: 'Nothing happens. It is rebuilt later.' })
+    expect(ok).toMatchObject({ verdict: 'SAFE' })
+    expect(ok.downgradedFrom).toBeUndefined()
+  })
+
+  it('reports low confidence as the reason when that is what changed it', () => {
+    const e = toExplanation({ ...base, confidence: 'LOW', verdict: 'SAFE', consequenceIfDeleted: 'Harmless.' })
+    expect(e.downgradeReason).toBe('low-confidence')
   })
 })

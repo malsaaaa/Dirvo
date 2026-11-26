@@ -17,6 +17,8 @@ export interface FolderExplanation {
   matchedId?: string
   /** Set when low AI confidence made Dirvo lower the verdict. This is what the AI originally said. */
   downgradedFrom?: Verdict
+  /** Why: the AI was not confident, or its own explanation contradicted a "safe" verdict. */
+  downgradeReason?: 'low-confidence' | 'contradiction'
 }
 
 export type AiExplainResult =

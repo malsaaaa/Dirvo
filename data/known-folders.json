@@ -642,6 +642,17 @@
     "includeDescendants": true
   },
   {
+    "id": "user-programs",
+    "patterns": [
+      "~/AppData/Local/Programs"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Programs installed for your account only (no administrator needed). Each folder inside is one installed program.",
+    "createdBy": "The program's installer",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "The program stops working and has to be reinstalled. To remove one properly, uninstall it from Settings instead."
+  },
+  {
     "id": "user-temp",
     "patterns": [
       "~/AppData/Local/Temp",

@@ -36,7 +36,9 @@ interface HttpCall {
 
 /** Builds the HTTP request for each wire format. Keys go in headers, never in URLs or bodies. */
 function buildCall(r: LlmRequest): HttpCall {
-  const maxTokens = r.maxTokens ?? 1024
+  // Generous on purpose: reasoning models count their hidden "thinking" against this limit, and a
+  // too-small budget leaves an empty answer. It only caps the reply; you pay for what is generated.
+  const maxTokens = r.maxTokens ?? 4096
   const json = { 'content-type': 'application/json' }
 
   switch (r.provider.protocol) {
@@ -56,7 +58,8 @@ function buildCall(r: LlmRequest): HttpCall {
           messages: [
             { role: 'system', content: r.system },
             { role: 'user', content: r.user }
-          ]
+          ],
+          ...r.provider.extraBody
         }
       }
     case 'gemini':

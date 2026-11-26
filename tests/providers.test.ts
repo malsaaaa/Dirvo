@@ -111,7 +111,7 @@ describe('callLlm request and response formats', () => {
     expect(headers().authorization).toBe('Bearer KEY12345678901234567')
     expect(body()).toMatchObject({
       model: 'gpt-4o-mini',
-      max_completion_tokens: 1024,
+      max_completion_tokens: 4096,
       messages: [
         { role: 'system', content: 'SYS' },
         { role: 'user', content: 'USER' }
@@ -125,7 +125,7 @@ describe('callLlm request and response formats', () => {
     expect(await callLlm(req(id))).toBe('hi')
     expect(calls[0].url).toBe(`${getProvider(id)!.defaultBaseUrl}/chat/completions`)
     expect(headers().authorization).toBe('Bearer KEY12345678901234567')
-    expect(body()).toHaveProperty('max_tokens', 1024)
+    expect(body()).toHaveProperty("max_tokens", 4096)
   })
 
   it('Gemini: key in a header (never the URL), systemInstruction, model in the path', async () => {
@@ -146,11 +146,28 @@ describe('callLlm request and response formats', () => {
     expect(calls[0].url).toContain('/models/tuned%2Fmodel%20v1:generateContent')
   })
 
-  it('Ollama: no authorization header at all, local address', async () => {
+  it('Ollama: no authorization header at all, local address, thinking turned off', async () => {
     respond = () => new Response(JSON.stringify(wrap.openai('hi')))
     expect(await callLlm(req('ollama', { apiKey: null }))).toBe('hi')
     expect(calls[0].url).toBe('http://localhost:11434/v1/chat/completions')
     expect(headers()).not.toHaveProperty('authorization')
+    // Without this, a thinking model can use its whole budget reasoning and return an empty answer.
+    expect(body()).toHaveProperty('reasoning_effort', 'none')
+  })
+
+  it('only Ollama gets the thinking switch; other providers never receive unknown fields', async () => {
+    respond = () => new Response(JSON.stringify(wrap.openai('hi')))
+    for (const id of ['openai', 'mistral', 'xai', 'deepseek', 'groq', 'openrouter', 'custom'] as const) {
+      calls = []
+      await callLlm(req(id))
+      expect(body(), id).not.toHaveProperty('reasoning_effort')
+    }
+  })
+
+  it('gives reasoning models a generous output budget', async () => {
+    respond = () => new Response(JSON.stringify(wrap.gemini('hi')))
+    await callLlm(req('gemini'))
+    expect((body().generationConfig as { maxOutputTokens: number }).maxOutputTokens).toBeGreaterThanOrEqual(4096)
   })
 
   it('Custom: sends a key only when one is saved, at the configured address', async () => {

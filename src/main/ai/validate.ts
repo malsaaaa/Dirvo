@@ -80,8 +80,31 @@ export function applyConfidencePolicy(verdict: Verdict, confidence: Confidence):
   return verdict
 }
 
+// Phrases that say deleting the folder breaks, loses or uninstalls something.
+const BREAKAGE =
+  /\b(?:breaks?|broken|stops? working|stopped working|(?:will|would|may|might|can)\s+(?:not|no longer)\s+(?:work|run|start|open|launch|function)|won'?t\s+(?:work|run|start|open|launch)|crash(?:es)?|corrupt\w*|data loss|lose|loses|lost|permanently|uninstall\w*|reinstall(?:ing)?|need(?:s)? to be (?:re)?installed|fresh (?:download|install\w*))\b/i
+// "nothing is lost", "will not break", "no data loss": the same words, used to reassure.
+const NEGATED =
+  /\b(?:no|not|never|nothing|none|without|n't)\b[^.;]{0,40}?\b(?:breaks?|broken|crash(?:es)?|corrupt\w*|data loss|lose|loses|lost)\b/gi
+
+/**
+ * A SAFE or REBUILDS verdict whose own explanation says deleting will break or lose something is
+ * contradicting itself. Small models do this. Trust the warning in the text over the label.
+ */
+export function contradictsSafety(consequence: string): boolean {
+  return BREAKAGE.test(consequence.replace(NEGATED, ' '))
+}
+
 export function toExplanation(answer: AiAnswer): FolderExplanation {
-  const verdict = applyConfidencePolicy(answer.verdict, answer.confidence)
+  let verdict = applyConfidencePolicy(answer.verdict, answer.confidence)
+  let reason: FolderExplanation['downgradeReason']
+  if (verdict !== answer.verdict) reason = 'low-confidence'
+
+  if ((verdict === 'SAFE' || verdict === 'REBUILDS_AUTOMATICALLY') && contradictsSafety(answer.consequenceIfDeleted)) {
+    verdict = 'CAUTION'
+    reason = 'contradiction'
+  }
+
   return {
     whatItIs: answer.whatItIs,
     createdBy: answer.createdBy,
@@ -89,6 +112,6 @@ export function toExplanation(answer: AiAnswer): FolderExplanation {
     confidence: answer.confidence,
     consequenceIfDeleted: answer.consequenceIfDeleted,
     source: 'ai',
-    ...(verdict !== answer.verdict ? { downgradedFrom: answer.verdict } : {})
+    ...(verdict !== answer.verdict ? { downgradedFrom: answer.verdict, downgradeReason: reason } : {})
   }
 }

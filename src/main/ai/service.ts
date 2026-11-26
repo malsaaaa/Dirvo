@@ -74,7 +74,7 @@ export async function testApiKey(deps: Pick<AiServiceDeps, 'settings' | 'keyStor
       apiKey,
       system: 'Reply with the single word OK.',
       user: 'ping',
-      maxTokens: 16,
+      maxTokens: 512, // reasoning models need room to think before the one-word answer
       fetchImpl: deps.fetchImpl
     })
     return { ok: true, message: 'Connection works.' }

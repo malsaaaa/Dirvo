@@ -87,7 +87,7 @@ describe('database validation', () => {
     const dontTouch = ['git-folder', 'chrome-profile', 'edge-profile', 'brave-profile', 'firefox-profile', 'vscode-user',
       'docker-wsl-data', 'wsl-distro', 'winsxs', 'system32', 'windows-installer', 'recycle-bin', 'system-volume-information']
     const atLeastCaution = ['docker-local', 'docker-programdata', 'package-cache', 'windows-old', 'python-venv', 'steam-library',
-      'outlook-data', 'gradle-home', 'maven-home', 'cargo-home', 'ollama-models', 'uwp-packages']
+      'outlook-data', 'user-programs', 'gradle-home', 'maven-home', 'cargo-home', 'ollama-models', 'uwp-packages']
     for (const id of dontTouch) expect(entries.get(id), id).toBe('DONT_TOUCH')
     for (const id of atLeastCaution) expect(['CAUTION', 'DONT_TOUCH'], id).toContain(entries.get(id))
   })
@@ -121,6 +121,8 @@ describe('matcher with the shipped database', () => {
     ['C:\\proj\\.git', 'git-folder', 'DONT_TOUCH'],
     ['C:\\proj\\.git\\objects', 'git-folder', 'DONT_TOUCH'],
     ['C:\\$Recycle.Bin', 'recycle-bin', 'DONT_TOUCH'],
+    ['C:\\Users\\a\\AppData\\Local\\Programs', 'user-programs', 'CAUTION'],
+    ['C:\\Users\\a\\AppData\\Local\\Programs\\Ollama\\lib', 'user-programs', 'CAUTION'],
     ['C:\\Windows\\WinSxS', 'winsxs', 'DONT_TOUCH']
   ])('%s -> %s (%s)', (path, expectedId, expectedVerdict) => {
     expect(id(path)).toBe(expectedId)
