@@ -3,6 +3,7 @@ import type { BreakdownControls } from '../hooks/useDriveScan'
 import type { ScannedFolder } from '../hooks/useScanner'
 import { formatBytes, formatCount, formatDate, formatDateTime, formatDelta } from '../lib/format'
 import { deltaOf } from '../lib/history'
+import { normPath } from '../lib/tree'
 import { VERDICT_STYLE } from '../lib/verdict'
 import Button from './Button'
 
@@ -163,6 +164,21 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown,
         <h2 className="min-w-0 break-words text-xl font-medium">{m.name}</h2>
         <p className="mt-2 break-all font-mono text-xs leading-relaxed text-ink-3">{m.path}</p>
       </header>
+
+      {breakdown.rescan && normPath(breakdown.rescan.path) === normPath(m.path) && (
+        // A rescan shows its progress here, because the scan screen is not on view.
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-hover px-4 py-3" aria-live="polite">
+          <div className="min-w-0">
+            <p className="text-sm font-medium">Rescanning…</p>
+            <p className="mt-0.5 font-mono text-xs tabular-nums text-ink-3">
+              {formatCount(breakdown.rescan.filesScanned)} files · {formatBytes(breakdown.rescan.bytesScanned)} so far
+            </p>
+          </div>
+          <Button className="h-8 px-3 text-xs" onClick={breakdown.cancelRescan}>
+            Cancel
+          </Button>
+        </div>
+      )}
 
       {e ? (
         // The ruling: the answer to "can I delete this?", with the verdict colour down its left edge.

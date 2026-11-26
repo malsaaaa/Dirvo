@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { ArrowDown, ArrowUp, CornerDownRight } from 'lucide-react'
 import { formatBytes, formatDelta, shortenPath } from '../lib/format'
 import { deltaOf } from '../lib/history'
@@ -23,9 +24,15 @@ const INDENT_PX = 20
  */
 export default function ResultsList({ rows, maxBytes, selectedPath, onSelect, label }: Props): React.JSX.Element {
   const max = Math.max(1, maxBytes)
+  const table = useRef<HTMLDivElement>(null)
+
+  // Moving with the keyboard must never leave the selection off screen.
+  useEffect(() => {
+    table.current?.querySelector('[aria-current="true"]')?.scrollIntoView({ block: 'nearest' })
+  }, [selectedPath])
 
   return (
-    <div role="table" aria-label={label}>
+    <div ref={table} role="table" aria-label={label}>
       <div role="row" className={`${COLUMNS} sticky top-0 z-10 border-b border-line bg-page px-4 py-2 text-xs text-ink-3`}>
         <span role="columnheader">Folder</span>
         <span role="columnheader" className="text-right">
@@ -44,7 +51,7 @@ export default function ResultsList({ rows, maxBytes, selectedPath, onSelect, la
             aria-level={depth + 1}
             onClick={() => onSelect(m.path)}
             aria-current={selected}
-            className={`${COLUMNS} relative w-full border-b border-line px-4 py-3 text-left transition-colors duration-150 ease-out-soft ${
+            className={`${COLUMNS} relative w-full scroll-mt-10 border-b border-line px-4 py-3 text-left transition-colors duration-150 ease-out-soft ${
               selected ? 'bg-raised' : 'hover:bg-hover'
             }`}
           >

@@ -16,7 +16,7 @@ interface Callbacks {
   onFinished: (outcome: DriveScanOutcome, target: string, kind: ScanKind, listed: number) => void
 }
 
-/** What the results screen needs to offer "look inside". */
+/** What the results screen needs to offer "look inside" and to show a rescan in progress. */
 export interface BreakdownControls {
   /** The folder being looked inside right now, if any. */
   runningPath: string | null
@@ -26,6 +26,9 @@ export interface BreakdownControls {
   busy: boolean
   start: (path: string, sizeBytes: number) => void
   cancel: () => void
+  /** A rescan of one folder that is running right now, with its progress. */
+  rescan: { path: string; filesScanned: number; bytesScanned: number } | null
+  cancelRescan: () => void
 }
 
 /** Small folders are hidden: 1% of the folder's size, kept between 1 MB and 50 MB. */

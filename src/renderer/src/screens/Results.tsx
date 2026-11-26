@@ -25,6 +25,11 @@ interface Props {
   onOpenSettings: () => void
   breakdown: BreakdownControls
   onRescan: (path: string) => void
+  /** Whether the export dialog is open. Owned by the app so Ctrl+E can open it. */
+  exportOpen: boolean
+  onExportOpenChange: (open: boolean) => void
+  /** Lets the app focus the search box (the / shortcut). */
+  searchRef: React.Ref<HTMLInputElement>
   /** The search, filter and sort. Kept by the app so they survive switching screens. */
   view: LedgerView
   onViewChange: (view: LedgerView) => void
@@ -42,11 +47,13 @@ export default function Results({
   onOpenSettings,
   breakdown,
   onRescan,
+  exportOpen,
+  onExportOpenChange,
+  searchRef,
   view,
   onViewChange,
   note
 }: Props): React.JSX.Element {
-  const [exportOpen, setExportOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const [savedReport, setSavedReport] = useState<string | null>(null)
@@ -82,7 +89,7 @@ export default function Results({
         redactUser: choice.redactUser
       })
       if (r.status === 'saved') {
-        setExportOpen(false)
+        onExportOpenChange(false)
         setSavedReport(r.path)
         setTimeout(() => setSavedReport((cur) => (cur === r.path ? null : cur)), 10000)
       } else if (r.status === 'error') {
@@ -115,7 +122,7 @@ export default function Results({
                 variant="ghost"
                 onClick={() => {
                   setExportError(null)
-                  setExportOpen(true)
+                  onExportOpenChange(true)
                 }}
                 className="h-8 text-xs"
               >
@@ -139,7 +146,7 @@ export default function Results({
               </button>
             </div>
           )}
-          {items.length >= 3 && <LedgerToolbar view={view} onChange={onViewChange} counts={result.counts} />}
+          {items.length >= 3 && <LedgerToolbar view={view} onChange={onViewChange} counts={result.counts} inputRef={searchRef} />}
           <div className="min-h-0 flex-1 overflow-y-auto">
             {result.rows.length === 0 ? (
               <div className="flex flex-col items-start gap-3 px-4 py-8">
@@ -176,7 +183,7 @@ export default function Results({
           shownCount={result.filtering ? result.matched : null}
           busy={exporting}
           error={exportError}
-          onCancel={() => setExportOpen(false)}
+          onCancel={() => onExportOpenChange(false)}
           onExport={(c) => void runExport(c)}
         />
       )}

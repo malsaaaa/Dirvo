@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FolderSearch, HardDrive, Rows3, Settings2, type LucideIcon } from 'lucide-react'
 import type { DriveScanItem, DriveScanOutcome, SavedScans } from '@shared/types'
+import Kbd from './components/Kbd'
 import Logo from './components/Logo'
+import ShortcutsDialog from './components/ShortcutsDialog'
+import Toast from './components/Toast'
 import { useDriveScan, type BreakdownControls, type ScanKind } from './hooks/useDriveScan'
 import { recordScan, type History } from './lib/history'
-import { DEFAULT_VIEW, type LedgerView } from './lib/ledger-view'
+import { DEFAULT_VIEW, applyView, type LedgerView } from './lib/ledger-view'
+import { keyToAction, movedIndex, type ShortcutAction } from './lib/shortcuts'
 import { useScanner, type ScannedFolder } from './hooks/useScanner'
 import PickFolder from './screens/PickFolder'
 import Results from './screens/Results'
@@ -25,6 +29,11 @@ export default function App(): React.JSX.Element {
   const [items, setItems] = useState<ScannedFolder[]>([])
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [view, setView] = useState<LedgerView>(DEFAULT_VIEW)
+  const [exportOpen, setExportOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const searchRef = useRef<HTMLInputElement>(null)
   const itemsRef = useRef<ScannedFolder[]>([])
   itemsRef.current = items
   // Latest known size of every scanned folder. Kept outside the results so it survives "Clear list".
@@ -135,7 +144,16 @@ export default function App(): React.JSX.Element {
     foldersScanned: scanState.status === 'scanning' ? (scanState.progress?.foldersScanned ?? 0) : 0,
     busy: driveBusy || folderBusy,
     start: (path, size) => void driveScanner.startBreakdown(path, size),
-    cancel: driveScanner.cancel
+    cancel: driveScanner.cancel,
+    rescan:
+      scanner.state.status === 'scanning'
+        ? {
+            path: scanner.state.path,
+            filesScanned: scanner.state.progress?.filesScanned ?? 0,
+            bytesScanned: scanner.state.progress?.bytesScanned ?? 0
+          }
+        : null,
+    cancelRescan: scanner.cancel
   }
 
   // After the provider or a key changes, retry folders that were waiting or failed.
@@ -190,6 +208,87 @@ export default function App(): React.JSX.Element {
     void window.dirvo.forgetScans()
   }, [])
 
+  // ---- Keyboard shortcuts. The listener is attached once and always calls the latest handler.
+  const flash = (message: string): void => {
+    setToast(message)
+    clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(null), 2200)
+  }
+
+  const runShortcut = (action: ShortcutAction): void => {
+    switch (action.type) {
+      case 'screen':
+        setScreen(action.screen)
+        return
+      case 'help':
+        setHelpOpen(true)
+        return
+      case 'search':
+        setScreen('results')
+        // The box is only on screen with three or more results, and may need a moment to appear.
+        setTimeout(() => {
+          if (searchRef.current) searchRef.current.focus()
+          else flash('Search appears once there are three or more results')
+        }, 0)
+        return
+      case 'export':
+        if (items.length === 0) flash('Nothing to export yet')
+        else {
+          setScreen('results')
+          setExportOpen(true)
+        }
+        return
+      case 'move': {
+        const rows = applyView(items, view).rows
+        if (rows.length === 0) return
+        const current = rows.findIndex((r) => r.item.metadata.path === selectedPath)
+        const next = rows[movedIndex(current, rows.length, action.to)]
+        if (next) setSelectedPath(next.item.metadata.path)
+        return
+      }
+      case 'row': {
+        if (items.length === 0) return
+        const item = items.find((i) => i.metadata.path === selectedPath) ?? items.reduce((a, b) => (b.metadata.sizeBytes > a.metadata.sizeBytes ? b : a))
+        const m = item.metadata
+        if (action.do === 'open') {
+          void window.dirvo.openInExplorer(m.path)
+          flash('Opened in Explorer')
+        } else if (action.do === 'copy') {
+          void window.dirvo.copyPath(m.path).then(() => flash('Path copied'))
+        } else if (action.do === 'rescan') {
+          if (breakdown.busy) flash('Another scan is running')
+          else void scanner.start(m.path)
+        } else if (action.do === 'lookInside') {
+          if (m.dirCount === 0) flash('There are no folders inside this one')
+          else if (item.lookedInside) flash('Already looked inside this folder')
+          else if (breakdown.busy) flash('Another scan is running')
+          else breakdown.start(m.path, m.sizeBytes)
+        } else if (action.do === 'explainAi') {
+          if (item.explanation) flash('Dirvo already knows this folder')
+          else if (item.aiStatus !== 'loading') void runAi(m.path)
+        }
+        return
+      }
+    }
+  }
+  const runShortcutRef = useRef(runShortcut)
+  runShortcutRef.current = runShortcut
+  const keyState = useRef({ screen, modalOpen: false })
+  keyState.current = { screen, modalOpen: exportOpen || helpOpen }
+
+  useEffect(() => {
+    const onKey = (ev: KeyboardEvent): void => {
+      const el = ev.target as HTMLElement | null
+      const typing = !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)
+      const action = keyToAction(ev, { typing, ...keyState.current })
+      if (!action) return
+      ev.preventDefault()
+      runShortcutRef.current(action)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   const unknownWaiting = items.filter((i) => i.aiStatus === 'no-key').length
 
   return (
@@ -223,7 +322,17 @@ export default function App(): React.JSX.Element {
             )}
           </button>
         ))}
-        <p className="mt-auto px-3 text-xs text-ink-3">Dirvo only advises and never deletes</p>
+        <div className="mt-auto flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => setHelpOpen(true)}
+            className="flex h-8 items-center justify-between rounded-lg px-3 text-xs text-ink-3 transition-colors duration-150 ease-out-soft hover:bg-raised hover:text-ink"
+          >
+            Keyboard shortcuts
+            <Kbd>?</Kbd>
+          </button>
+          <p className="px-3 text-xs text-ink-3">Dirvo only advises and never deletes</p>
+        </div>
       </nav>
 
       <main className="min-w-0 flex-1 overflow-y-auto">
@@ -261,6 +370,9 @@ export default function App(): React.JSX.Element {
             onOpenSettings={() => setScreen('settings')}
             breakdown={breakdown}
             onRescan={(p) => void scanner.start(p)}
+            exportOpen={exportOpen}
+            onExportOpenChange={setExportOpen}
+            searchRef={searchRef}
             view={view}
             onViewChange={setView}
             note={
@@ -272,6 +384,9 @@ export default function App(): React.JSX.Element {
         )}
         {screen === 'settings' && <Settings onAiChanged={onAiChanged} savedCount={items.length} onForgetScans={forgetScans} />}
       </main>
+
+      {helpOpen && <ShortcutsDialog onClose={() => setHelpOpen(false)} />}
+      <Toast message={toast} />
     </div>
   )
 }

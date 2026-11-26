@@ -8,23 +8,28 @@ interface Props {
   onChange: (view: LedgerView) => void
   /** How many folders each chip would show with the current search. */
   counts: Record<FilterKey, number>
+  /** Lets the app focus the search box (the / shortcut). */
+  inputRef?: React.Ref<HTMLInputElement>
 }
 
 /** Search, filter chips and sort for the results ledger. */
-export default function LedgerToolbar({ view, onChange, counts }: Props): React.JSX.Element {
+export default function LedgerToolbar({ view, onChange, counts, inputRef }: Props): React.JSX.Element {
   return (
     <div className="flex flex-col gap-3 px-4 pb-3">
       <div className="flex gap-2">
         <div className="relative min-w-0 flex-1">
           <Search size={16} strokeWidth={1.5} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" aria-hidden />
           <input
+            ref={inputRef}
             type="search"
             value={view.query}
             onChange={(ev) => onChange({ ...view, query: ev.target.value })}
             onKeyDown={(ev) => {
-              if (ev.key === 'Escape' && view.query) {
+              if (ev.key === 'Escape') {
                 ev.preventDefault()
-                onChange({ ...view, query: '' })
+                // First Esc clears the search; a second one leaves the box so the letter shortcuts work again.
+                if (view.query) onChange({ ...view, query: '' })
+                else ev.currentTarget.blur()
               }
             }}
             placeholder="Search name, path or maker"
