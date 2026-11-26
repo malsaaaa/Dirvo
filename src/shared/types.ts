@@ -5,6 +5,19 @@ export type Verdict = 'SAFE' | 'REBUILDS_AUTOMATICALLY' | 'CAUTION' | 'DONT_TOUC
 export type Confidence = 'LOW' | 'MEDIUM' | 'HIGH'
 export type ExplanationSource = 'system' | 'database' | 'ai'
 
+/** Windows Settings pages Dirvo can open for the user. */
+export type SettingsTarget = 'storage' | 'apps'
+
+/**
+ * Advice on cleaning a folder the safe way. Dirvo never deletes anything: this is text, a command
+ * from a fixed allow-list that the user can copy and run themselves, or a Settings page to open.
+ */
+export interface HowToClean {
+  text: string
+  command?: string
+  settings?: SettingsTarget
+}
+
 /** What Dirvo tells the user about a folder. Advice only: Dirvo never deletes anything. */
 export interface FolderExplanation {
   whatItIs: string
@@ -17,6 +30,8 @@ export interface FolderExplanation {
   matchedId?: string
   /** Set when low AI confidence made Dirvo lower the verdict. This is what the AI originally said. */
   downgradedFrom?: Verdict
+  /** Safe ways to clean it, from the known-folder database. */
+  howToClean?: HowToClean
   /** Why: the AI was not confident, or its own explanation contradicted a "safe" verdict. */
   downgradeReason?: 'low-confidence' | 'contradiction'
 }
@@ -131,6 +146,10 @@ export interface DirvoApi {
   listDrives: () => Promise<DriveInfo[]>
   /** Offline lookup: system rules, then the known-folder database. Null means unknown. */
   explainFolder: (path: string) => Promise<FolderExplanation | null>
+  /** Copies one of Dirvo's cleanup commands to the clipboard. Refused for anything not on the allow-list. */
+  copyCommand: (command: string) => Promise<void>
+  /** Opens a Windows Settings page. Only the pages in SettingsTarget are allowed. */
+  openSettings: (target: SettingsTarget) => Promise<void>
   /** Asks the AI about a folder Dirvo does not know. Only sanitised metadata leaves the PC. */
   aiExplain: (metadata: FolderMetadata) => Promise<AiExplainResult>
   /** The selected AI provider, model and address, plus whether a key is saved for it. */

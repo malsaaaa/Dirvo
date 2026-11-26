@@ -80,10 +80,20 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings }: Props): 
   const { metadata: m, explanation: e } = item
   const [feedback, setFeedback] = useState('')
 
+  const flash = (message: string): void => {
+    setFeedback(message)
+    setTimeout(() => setFeedback(''), 1800)
+  }
+
   const copy = async (): Promise<void> => {
     await window.dirvo.copyPath(m.path)
-    setFeedback('Path copied')
-    setTimeout(() => setFeedback(''), 1800)
+    flash('Path copied')
+  }
+
+  const copyCommand = async (command: string | undefined): Promise<void> => {
+    if (!command) return
+    await window.dirvo.copyCommand(command)
+    flash('Command copied. Paste it into a terminal to run it')
   }
 
   const topTypes = Object.entries(m.extensionCounts).slice(0, 8)
@@ -120,6 +130,26 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings }: Props): 
             <Row label="What it is">{e.whatItIs}</Row>
             <Row label="Made by">{e.createdBy}</Row>
             <Row label="If deleted">{e.consequenceIfDeleted}</Row>
+            {e.howToClean && (
+              <Row label="To clean">
+                <p>{e.howToClean.text}</p>
+                {e.howToClean.command && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <code className="min-w-0 flex-1 truncate rounded-md border border-line bg-page px-2.5 py-1.5 font-mono text-xs" title={e.howToClean.command}>
+                      {e.howToClean.command}
+                    </code>
+                    <Button className="h-8 px-3 text-xs" onClick={() => void copyCommand(e.howToClean?.command)}>
+                      Copy
+                    </Button>
+                  </div>
+                )}
+                {e.howToClean.settings && (
+                  <Button className="mt-3 h-8 px-3 text-xs" onClick={() => void window.dirvo.openSettings(e.howToClean?.settings ?? 'storage')}>
+                    {e.howToClean.settings === 'apps' ? 'Open Apps settings' : 'Open Storage settings'}
+                  </Button>
+                )}
+              </Row>
+            )}
           </>
         )}
         <Row label="Size" mono>

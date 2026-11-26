@@ -8,7 +8,10 @@
     "whatItIs": "Downloaded JavaScript packages that a project depends on.",
     "createdBy": "npm, Yarn or pnpm",
     "verdict": "SAFE",
-    "consequenceIfDeleted": "The project will not run until you reinstall them with \"npm install\" (or yarn/pnpm). Nothing of yours is lost."
+    "consequenceIfDeleted": "The project will not run until you reinstall them with \"npm install\" (or yarn/pnpm). Nothing of yours is lost.",
+    "howToClean": {
+      "text": "Close your editor and any dev server using the project, then delete the folder in File Explorer. Run npm install (or yarn or pnpm) when you next need it."
+    }
   },
   {
     "id": "git-folder",
@@ -32,7 +35,11 @@
     "whatItIs": "npm's download cache of packages you have installed before.",
     "createdBy": "npm",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "npm re-downloads packages when needed, so the next installs are slower."
+    "consequenceIfDeleted": "npm re-downloads packages when needed, so the next installs are slower.",
+    "howToClean": {
+      "text": "npm can clear its own cache, which is safer than deleting files by hand.",
+      "command": "npm cache clean --force"
+    }
   },
   {
     "id": "npm-global",
@@ -53,7 +60,11 @@
     "whatItIs": "Yarn's download cache of packages.",
     "createdBy": "Yarn",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Yarn re-downloads packages when needed."
+    "consequenceIfDeleted": "Yarn re-downloads packages when needed.",
+    "howToClean": {
+      "text": "Yarn can clear its own cache, which is safer than deleting files by hand.",
+      "command": "yarn cache clean"
+    }
   },
   {
     "id": "pnpm-store",
@@ -65,7 +76,11 @@
     "whatItIs": "pnpm's shared package store.",
     "createdBy": "pnpm",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "pnpm re-downloads packages on the next install. Existing projects keep working."
+    "consequenceIfDeleted": "pnpm re-downloads packages on the next install. Existing projects keep working.",
+    "howToClean": {
+      "text": "pnpm can remove the packages nothing uses any more.",
+      "command": "pnpm store prune"
+    }
   },
   {
     "id": "gradle-caches",
@@ -76,7 +91,10 @@
     "whatItIs": "Gradle's cache of downloaded libraries and build data.",
     "createdBy": "Gradle",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "The next build re-downloads everything it needs, which can take a while and needs internet."
+    "consequenceIfDeleted": "The next build re-downloads everything it needs, which can take a while and needs internet.",
+    "howToClean": {
+      "text": "Stop Gradle first (run gradle --stop, or close Android Studio), then delete the folder in File Explorer. Gradle downloads what it needs again on the next build."
+    }
   },
   {
     "id": "gradle-wrapper",
@@ -87,7 +105,10 @@
     "whatItIs": "Downloaded Gradle versions used by projects through gradlew.",
     "createdBy": "Gradle wrapper",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Each project re-downloads its Gradle version the next time you build it."
+    "consequenceIfDeleted": "Each project re-downloads its Gradle version the next time you build it.",
+    "howToClean": {
+      "text": "Close Android Studio and any running builds, then delete the folder in File Explorer. Each project downloads its Gradle version again when you build it."
+    }
   },
   {
     "id": "gradle-home",
@@ -109,7 +130,10 @@
     "whatItIs": "Per-project Gradle state and caches. If this is in your user folder, it is the global Gradle home instead.",
     "createdBy": "Gradle",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Gradle recreates it on the next build, which may be slower once."
+    "consequenceIfDeleted": "Gradle recreates it on the next build, which may be slower once.",
+    "howToClean": {
+      "text": "Close your IDE, then delete the folder in File Explorer. It is recreated on the next build."
+    }
   },
   {
     "id": "maven-repository",
@@ -120,7 +144,10 @@
     "whatItIs": "Maven's local repository of downloaded libraries.",
     "createdBy": "Maven",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Maven re-downloads libraries on the next build. Locally installed (mvn install) artifacts are lost."
+    "consequenceIfDeleted": "Maven re-downloads libraries on the next build. Locally installed (mvn install) artifacts are lost.",
+    "howToClean": {
+      "text": "Close your IDE and any running builds, then delete the folder in File Explorer. Maven downloads libraries again."
+    }
   },
   {
     "id": "maven-home",
@@ -142,7 +169,11 @@
     "whatItIs": "Downloaded NuGet packages for .NET projects.",
     "createdBy": "NuGet / .NET",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "They are restored on the next build, which needs internet."
+    "consequenceIfDeleted": "They are restored on the next build, which needs internet.",
+    "howToClean": {
+      "text": "The .NET tool can clear its own cache, which is safer than deleting files by hand.",
+      "command": "dotnet nuget locals all --clear"
+    }
   },
   {
     "id": "nuget-http-cache",
@@ -153,7 +184,11 @@
     "whatItIs": "NuGet's cache of web responses.",
     "createdBy": "NuGet",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "NuGet refreshes it as needed."
+    "consequenceIfDeleted": "NuGet refreshes it as needed.",
+    "howToClean": {
+      "text": "The .NET tool can clear its own cache, which is safer than deleting files by hand.",
+      "command": "dotnet nuget locals all --clear"
+    }
   },
   {
     "id": "pip-cache",
@@ -164,7 +199,11 @@
     "whatItIs": "pip's cache of downloaded packages.",
     "createdBy": "pip (Python)",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "pip re-downloads packages when needed."
+    "consequenceIfDeleted": "pip re-downloads packages when needed.",
+    "howToClean": {
+      "text": "pip can clear its own cache, which is safer than deleting files by hand.",
+      "command": "pip cache purge"
+    }
   },
   {
     "id": "pycache",
@@ -187,7 +226,10 @@
     "whatItIs": "A project's isolated Python environment with its installed packages.",
     "createdBy": "Python venv / virtualenv",
     "verdict": "CAUTION",
-    "consequenceIfDeleted": "The project will not run until you recreate the environment and reinstall packages. Scripts that rely on exact installed versions may break."
+    "consequenceIfDeleted": "The project will not run until you recreate the environment and reinstall packages. Scripts that rely on exact installed versions may break.",
+    "howToClean": {
+      "text": "Delete the folder in File Explorer. To use the project again, create a new environment with \"python -m venv\" and reinstall its packages."
+    }
   },
   {
     "id": "cargo-registry",
@@ -198,7 +240,10 @@
     "whatItIs": "Downloaded Rust crates and the crates.io index.",
     "createdBy": "Cargo (Rust)",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Cargo re-downloads crates on the next build."
+    "consequenceIfDeleted": "Cargo re-downloads crates on the next build.",
+    "howToClean": {
+      "text": "Close any running builds, then delete the folder in File Explorer. Cargo downloads crates again."
+    }
   },
   {
     "id": "cargo-home",
@@ -231,7 +276,11 @@
     "whatItIs": "Downloaded Go modules.",
     "createdBy": "Go",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Go re-downloads modules on the next build."
+    "consequenceIfDeleted": "Go re-downloads modules on the next build.",
+    "howToClean": {
+      "text": "Go can clear its own cache, which is safer than deleting files by hand.",
+      "command": "go clean -modcache"
+    }
   },
   {
     "id": "go-build-cache",
@@ -242,7 +291,11 @@
     "whatItIs": "Go's build cache.",
     "createdBy": "Go",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "The next build is slower while the cache refills."
+    "consequenceIfDeleted": "The next build is slower while the cache refills.",
+    "howToClean": {
+      "text": "Go can clear its own cache, which is safer than deleting files by hand.",
+      "command": "go clean -cache"
+    }
   },
   {
     "id": "vscode-extensions",
@@ -268,7 +321,10 @@
     "whatItIs": "Temporary caches used by VS Code.",
     "createdBy": "Visual Studio Code",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "VS Code recreates them. The next start may be a little slower."
+    "consequenceIfDeleted": "VS Code recreates them. The next start may be a little slower.",
+    "howToClean": {
+      "text": "Close VS Code, then delete the folder in File Explorer."
+    }
   },
   {
     "id": "vscode-user",
@@ -290,7 +346,10 @@
     "whatItIs": "Per-solution cache and local settings (such as breakpoints and window layout).",
     "createdBy": "Visual Studio",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Visual Studio recreates it. You may lose breakpoints and the open-tabs layout."
+    "consequenceIfDeleted": "Visual Studio recreates it. You may lose breakpoints and the open-tabs layout.",
+    "howToClean": {
+      "text": "Close Visual Studio, then delete the folder in File Explorer."
+    }
   },
   {
     "id": "jetbrains-caches",
@@ -302,7 +361,10 @@
     "whatItIs": "Index caches and logs of a JetBrains IDE.",
     "createdBy": "JetBrains IDE",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "The IDE rebuilds its indexes on the next start, which can take several minutes."
+    "consequenceIfDeleted": "The IDE rebuilds its indexes on the next start, which can take several minutes.",
+    "howToClean": {
+      "text": "In the IDE, use File > Invalidate Caches. Or close the IDE and delete the folder in File Explorer."
+    }
   },
   {
     "id": "huggingface-cache",
@@ -313,7 +375,11 @@
     "whatItIs": "Downloaded AI models and datasets.",
     "createdBy": "Hugging Face libraries",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "They are downloaded again when needed. Models can be many gigabytes."
+    "consequenceIfDeleted": "They are downloaded again when needed. Models can be many gigabytes.",
+    "howToClean": {
+      "text": "This command lets you choose which cached models to remove.",
+      "command": "huggingface-cli delete-cache"
+    }
   },
   {
     "id": "torch-cache",
@@ -324,7 +390,10 @@
     "whatItIs": "Downloaded pretrained model weights.",
     "createdBy": "PyTorch",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "PyTorch downloads them again when needed."
+    "consequenceIfDeleted": "PyTorch downloads them again when needed.",
+    "howToClean": {
+      "text": "Close any Python programs using PyTorch, then delete the folder in File Explorer. Models are downloaded again when needed."
+    }
   },
   {
     "id": "ollama-models",
@@ -335,6 +404,10 @@
     "createdBy": "Ollama",
     "verdict": "CAUTION",
     "consequenceIfDeleted": "Models must be pulled again, which can be many gigabytes each.",
+    "howToClean": {
+      "text": "List your models, then remove the ones you no longer use with \"ollama rm\" followed by the model name.",
+      "command": "ollama list"
+    },
     "includeDescendants": true
   },
   {
@@ -347,7 +420,11 @@
     "whatItIs": "Conda's cache of downloaded package files.",
     "createdBy": "Conda",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Conda re-downloads packages when it needs them. Existing environments keep working."
+    "consequenceIfDeleted": "Conda re-downloads packages when it needs them. Existing environments keep working.",
+    "howToClean": {
+      "text": "conda can clear its own cache, which is safer than deleting files by hand.",
+      "command": "conda clean --all"
+    }
   },
   {
     "id": "android-sdk",
@@ -358,6 +435,9 @@
     "createdBy": "Android Studio",
     "verdict": "CAUTION",
     "consequenceIfDeleted": "Android projects will not build until you re-download the SDK components.",
+    "howToClean": {
+      "text": "Use the SDK Manager in Android Studio to uninstall the components you do not use."
+    },
     "includeDescendants": true
   },
   {
@@ -369,7 +449,10 @@
     "whatItIs": "Android emulator virtual devices and their data.",
     "createdBy": "Android Studio",
     "verdict": "CAUTION",
-    "consequenceIfDeleted": "The virtual devices and anything stored inside them are deleted."
+    "consequenceIfDeleted": "The virtual devices and anything stored inside them are deleted.",
+    "howToClean": {
+      "text": "Delete emulators you no longer use from the Device Manager in Android Studio."
+    }
   },
   {
     "id": "docker-wsl-data",
@@ -380,7 +463,11 @@
     "whatItIs": "The virtual disk holding all your Docker images, containers and volumes.",
     "createdBy": "Docker Desktop",
     "verdict": "DONT_TOUCH",
-    "consequenceIfDeleted": "All images, containers and volumes (including databases stored in them) are permanently lost."
+    "consequenceIfDeleted": "All images, containers and volumes (including databases stored in them) are permanently lost.",
+    "howToClean": {
+      "text": "Do not delete these files by hand. Clean up from inside Docker Desktop (Troubleshoot > Clean / Purge data), or remove unused images and containers with this command.",
+      "command": "docker system prune"
+    }
   },
   {
     "id": "docker-local",
@@ -391,6 +478,10 @@
     "createdBy": "Docker Desktop",
     "verdict": "CAUTION",
     "consequenceIfDeleted": "Images, containers and volumes may be lost. Use Docker Desktop (Troubleshoot or \"docker system prune\") to clean up instead.",
+    "howToClean": {
+      "text": "Do not delete these files by hand. Clean up from inside Docker Desktop (Troubleshoot > Clean / Purge data), or remove unused images and containers with this command.",
+      "command": "docker system prune"
+    },
     "includeDescendants": true
   },
   {
@@ -413,7 +504,11 @@
     "whatItIs": "Docker Desktop's system-wide data, which may include virtual disks.",
     "createdBy": "Docker Desktop",
     "verdict": "CAUTION",
-    "consequenceIfDeleted": "Images, containers and volumes may be lost. Clean up from inside Docker Desktop instead."
+    "consequenceIfDeleted": "Images, containers and volumes may be lost. Clean up from inside Docker Desktop instead.",
+    "howToClean": {
+      "text": "Do not delete these files by hand. Clean up from inside Docker Desktop, or remove unused images and containers with this command.",
+      "command": "docker system prune"
+    }
   },
   {
     "id": "docker-config",
@@ -440,7 +535,10 @@
     "whatItIs": "Temporary web cache of Google Chrome (pages, images, scripts).",
     "createdBy": "Google Chrome",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Google Chrome refills it as you browse. Pages load slower at first. Bookmarks, passwords and history are not stored here."
+    "consequenceIfDeleted": "Google Chrome refills it as you browse. Pages load slower at first. Bookmarks, passwords and history are not stored here.",
+    "howToClean": {
+      "text": "Clear it from the browser instead: open its privacy settings and clear \"Cached images and files\". That is safer than deleting files by hand."
+    }
   },
   {
     "id": "chrome-profile",
@@ -468,7 +566,10 @@
     "whatItIs": "Temporary web cache of Microsoft Edge (pages, images, scripts).",
     "createdBy": "Microsoft Edge",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Microsoft Edge refills it as you browse. Pages load slower at first. Bookmarks, passwords and history are not stored here."
+    "consequenceIfDeleted": "Microsoft Edge refills it as you browse. Pages load slower at first. Bookmarks, passwords and history are not stored here.",
+    "howToClean": {
+      "text": "Clear it from the browser instead: open its privacy settings and clear \"Cached images and files\". That is safer than deleting files by hand."
+    }
   },
   {
     "id": "edge-profile",
@@ -496,7 +597,10 @@
     "whatItIs": "Temporary web cache of Brave (pages, images, scripts).",
     "createdBy": "Brave",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Brave refills it as you browse. Pages load slower at first. Bookmarks, passwords and history are not stored here."
+    "consequenceIfDeleted": "Brave refills it as you browse. Pages load slower at first. Bookmarks, passwords and history are not stored here.",
+    "howToClean": {
+      "text": "Clear it from the browser instead: open its privacy settings and clear \"Cached images and files\". That is safer than deleting files by hand."
+    }
   },
   {
     "id": "brave-profile",
@@ -521,7 +625,10 @@
     "whatItIs": "Temporary web cache of Firefox.",
     "createdBy": "Mozilla Firefox",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Firefox refills it as you browse. Pages load slower at first."
+    "consequenceIfDeleted": "Firefox refills it as you browse. Pages load slower at first.",
+    "howToClean": {
+      "text": "Clear it from the browser instead: open its privacy settings and clear \"Cached web content\". That is safer than deleting files by hand."
+    }
   },
   {
     "id": "firefox-profile",
@@ -546,7 +653,10 @@
     "whatItIs": "Temporary cache of Discord.",
     "createdBy": "Discord",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Discord recreates it. Images reload from the internet."
+    "consequenceIfDeleted": "Discord recreates it. Images reload from the internet.",
+    "howToClean": {
+      "text": "Close Discord, then delete the folder in File Explorer."
+    }
   },
   {
     "id": "slack-cache",
@@ -560,7 +670,10 @@
     "whatItIs": "Temporary cache of the Slack desktop app.",
     "createdBy": "Slack",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Slack recreates it. It may be slow to load once."
+    "consequenceIfDeleted": "Slack recreates it. It may be slow to load once.",
+    "howToClean": {
+      "text": "Close Slack, then delete the folder in File Explorer."
+    }
   },
   {
     "id": "spotify-storage",
@@ -571,7 +684,10 @@
     "whatItIs": "Spotify's cache of streamed and downloaded songs.",
     "createdBy": "Spotify",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Cached songs stream again. Offline downloads must be re-downloaded."
+    "consequenceIfDeleted": "Cached songs stream again. Offline downloads must be re-downloaded.",
+    "howToClean": {
+      "text": "Use the storage setting inside Spotify to clear its cache. Offline downloads will need to be downloaded again."
+    }
   },
   {
     "id": "adobe-media-cache",
@@ -583,7 +699,10 @@
     "whatItIs": "Cached previews of imported audio and video.",
     "createdBy": "Adobe Premiere / After Effects",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Adobe re-creates them when you reopen a project, which can take time."
+    "consequenceIfDeleted": "Adobe re-creates them when you reopen a project, which can take time.",
+    "howToClean": {
+      "text": "Use the Media Cache settings in the Adobe app to clean it, rather than deleting files by hand."
+    }
   },
   {
     "id": "steam-shadercache",
@@ -594,7 +713,10 @@
     "whatItIs": "Compiled graphics shaders for your Steam games.",
     "createdBy": "Steam",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Games rebuild them, which can cause stutter on the first run."
+    "consequenceIfDeleted": "Games rebuild them, which can cause stutter on the first run.",
+    "howToClean": {
+      "text": "Close Steam, then delete the folder in File Explorer. Games rebuild their shaders on the next run."
+    }
   },
   {
     "id": "steam-library",
@@ -617,7 +739,10 @@
     "whatItIs": "Office's cache of files opened from cloud locations.",
     "createdBy": "Microsoft Office",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Office rebuilds it. Make sure documents are saved first, since unsynced edits may live here."
+    "consequenceIfDeleted": "Office rebuilds it. Make sure documents are saved first, since unsynced edits may live here.",
+    "howToClean": {
+      "text": "Close all Office programs, then delete the folder in File Explorer. Make sure your documents are saved and synced first."
+    }
   },
   {
     "id": "outlook-data",
@@ -650,7 +775,11 @@
     "whatItIs": "Programs installed for your account only (no administrator needed). Each folder inside is one installed program.",
     "createdBy": "The program's installer",
     "verdict": "CAUTION",
-    "consequenceIfDeleted": "The program stops working and has to be reinstalled. To remove one properly, uninstall it from Settings instead."
+    "consequenceIfDeleted": "The program stops working and has to be reinstalled. To remove one properly, uninstall it from Settings instead.",
+    "howToClean": {
+      "text": "Uninstall the program from Settings > Apps instead of deleting its folder.",
+      "settings": "apps"
+    }
   },
   {
     "id": "user-temp",
@@ -662,7 +791,11 @@
     "whatItIs": "Temporary files that programs leave behind.",
     "createdBy": "Windows and installed programs",
     "verdict": "SAFE",
-    "consequenceIfDeleted": "Files in use are skipped or locked. Programs recreate whatever they need. Close open programs first."
+    "consequenceIfDeleted": "Files in use are skipped or locked. Programs recreate whatever they need. Close open programs first.",
+    "howToClean": {
+      "text": "Close your programs, then use Settings > System > Storage > Temporary files. Or delete the contents (not the folder itself) in File Explorer. Files that are in use are skipped.",
+      "settings": "storage"
+    }
   },
   {
     "id": "crash-dumps",
@@ -673,7 +806,11 @@
     "whatItIs": "Memory dumps saved when programs crashed.",
     "createdBy": "Windows Error Reporting",
     "verdict": "SAFE",
-    "consequenceIfDeleted": "Only useful for debugging crashes. Nothing breaks."
+    "consequenceIfDeleted": "Only useful for debugging crashes. Nothing breaks.",
+    "howToClean": {
+      "text": "Delete the files in File Explorer, or use Storage settings. Nothing depends on them.",
+      "settings": "storage"
+    }
   },
   {
     "id": "wer-reports",
@@ -684,7 +821,11 @@
     "whatItIs": "Queued and archived crash reports.",
     "createdBy": "Windows Error Reporting",
     "verdict": "SAFE",
-    "consequenceIfDeleted": "Only useful for troubleshooting. Nothing breaks."
+    "consequenceIfDeleted": "Only useful for troubleshooting. Nothing breaks.",
+    "howToClean": {
+      "text": "Storage settings can remove these (look for system error reports in Temporary files).",
+      "settings": "storage"
+    }
   },
   {
     "id": "ie-inetcache",
@@ -706,7 +847,11 @@
     "whatItIs": "Thumbnail and icon caches.",
     "createdBy": "Windows Explorer",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Explorer rebuilds them, so thumbnails load slowly for a while."
+    "consequenceIfDeleted": "Explorer rebuilds them, so thumbnails load slowly for a while.",
+    "howToClean": {
+      "text": "Use Settings > System > Storage > Temporary files and tick Thumbnails.",
+      "settings": "storage"
+    }
   },
   {
     "id": "d3d-shader-cache",
@@ -717,7 +862,11 @@
     "whatItIs": "Compiled graphics shaders.",
     "createdBy": "DirectX / graphics driver",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "They are rebuilt, which can cause brief stutter in games."
+    "consequenceIfDeleted": "They are rebuilt, which can cause brief stutter in games.",
+    "howToClean": {
+      "text": "Use Settings > System > Storage > Temporary files and tick DirectX Shader Cache.",
+      "settings": "storage"
+    }
   },
   {
     "id": "nvidia-cache",
@@ -788,7 +937,11 @@
     "whatItIs": "Cached installers that programs use to repair, modify or uninstall themselves.",
     "createdBy": "Windows Installer / Visual Studio and other installers",
     "verdict": "CAUTION",
-    "consequenceIfDeleted": "The affected programs may fail to repair, update or uninstall. Windows will ask for the original installer."
+    "consequenceIfDeleted": "The affected programs may fail to repair, update or uninstall. Windows will ask for the original installer.",
+    "howToClean": {
+      "text": "Uninstall programs you no longer need from Settings > Apps. Do not delete this folder by hand.",
+      "settings": "apps"
+    }
   },
   {
     "id": "windows-update-download",
@@ -799,7 +952,11 @@
     "whatItIs": "Downloaded Windows update files.",
     "createdBy": "Windows Update",
     "verdict": "REBUILDS_AUTOMATICALLY",
-    "consequenceIfDeleted": "Windows Update downloads them again if needed. Stop the Windows Update service first."
+    "consequenceIfDeleted": "Windows Update downloads them again if needed. Stop the Windows Update service first.",
+    "howToClean": {
+      "text": "Use Settings > System > Storage > Temporary files and tick Windows Update Cleanup. That is safer than deleting the folder by hand.",
+      "settings": "storage"
+    }
   },
   {
     "id": "windows-update-store",
@@ -809,7 +966,11 @@
     "whatItIs": "Windows Update's working folder, including its history database.",
     "createdBy": "Windows Update",
     "verdict": "CAUTION",
-    "consequenceIfDeleted": "Update history resets, and a bad delete can leave Windows Update failing until repaired."
+    "consequenceIfDeleted": "Update history resets, and a bad delete can leave Windows Update failing until repaired.",
+    "howToClean": {
+      "text": "Use Settings > System > Storage > Temporary files and tick Windows Update Cleanup. Do not delete this folder by hand.",
+      "settings": "storage"
+    }
   },
   {
     "id": "windows-installer",
@@ -831,7 +992,11 @@
     "whatItIs": "The component store holding Windows system files and updates.",
     "createdBy": "Windows",
     "verdict": "DONT_TOUCH",
-    "consequenceIfDeleted": "Windows can become unbootable or unable to update. Use Disk Cleanup or DISM to shrink it safely."
+    "consequenceIfDeleted": "Windows can become unbootable or unable to update. Use Disk Cleanup or DISM to shrink it safely.",
+    "howToClean": {
+      "text": "Never delete files here. To shrink it safely, run this command in a Terminal opened as administrator, or use Disk Cleanup and choose Clean up system files.",
+      "command": "DISM /Online /Cleanup-Image /StartComponentCleanup"
+    }
   },
   {
     "id": "system32",
@@ -866,7 +1031,11 @@
     "whatItIs": "Crash dump files from system crashes.",
     "createdBy": "Windows",
     "verdict": "SAFE",
-    "consequenceIfDeleted": "Only useful for diagnosing crashes. Nothing breaks."
+    "consequenceIfDeleted": "Only useful for diagnosing crashes. Nothing breaks.",
+    "howToClean": {
+      "text": "Storage settings can remove these (look for system error memory dump files in Temporary files).",
+      "settings": "storage"
+    }
   },
   {
     "id": "windows-old",
@@ -877,7 +1046,11 @@
     "whatItIs": "Your previous Windows installation, kept after an upgrade so you can roll back.",
     "createdBy": "Windows Setup",
     "verdict": "CAUTION",
-    "consequenceIfDeleted": "You can no longer roll back to the old Windows. Remove it with Disk Cleanup (Previous Windows installations); files in it that you still need should be copied first."
+    "consequenceIfDeleted": "You can no longer roll back to the old Windows. Remove it with Disk Cleanup (Previous Windows installations); files in it that you still need should be copied first.",
+    "howToClean": {
+      "text": "Use Settings > System > Storage > Temporary files and tick Previous Windows installation(s). Copy anything you still need first.",
+      "settings": "storage"
+    }
   },
   {
     "id": "windows-upgrade-temp",
@@ -890,7 +1063,11 @@
     "whatItIs": "Leftover files from a Windows upgrade or feature update.",
     "createdBy": "Windows Setup",
     "verdict": "CAUTION",
-    "consequenceIfDeleted": "Safe once the upgrade is complete, but remove them with Disk Cleanup, not by hand."
+    "consequenceIfDeleted": "Safe once the upgrade is complete, but remove them with Disk Cleanup, not by hand.",
+    "howToClean": {
+      "text": "Windows removes these itself after an upgrade. Storage settings may also list them under Temporary files.",
+      "settings": "storage"
+    }
   },
   {
     "id": "recycle-bin",
@@ -901,7 +1078,10 @@
     "whatItIs": "The Recycle Bin storage for this drive.",
     "createdBy": "Windows",
     "verdict": "DONT_TOUCH",
-    "consequenceIfDeleted": "Do not delete this folder by hand. Empty the Recycle Bin from the desktop instead."
+    "consequenceIfDeleted": "Do not delete this folder by hand. Empty the Recycle Bin from the desktop instead.",
+    "howToClean": {
+      "text": "Right-click the Recycle Bin on the desktop and choose Empty Recycle Bin. Do not delete this folder."
+    }
   },
   {
     "id": "system-volume-information",

@@ -36,6 +36,7 @@ export function explainPath(path: string, matcher: Matcher = getDefaultMatcher()
       confidence: entry.confidence ?? 'HIGH',
       consequenceIfDeleted: entry.consequenceIfDeleted,
       source: 'database',
+      ...(entry.howToClean ? { howToClean: entry.howToClean } : {}),
       matchedId: kind === 'inside' ? `${entry.id} (inside)` : entry.id
     }
   }

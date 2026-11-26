@@ -1,4 +1,5 @@
-import type { Confidence, Verdict } from '../../shared/types'
+import type { Confidence, HowToClean, Verdict } from '../../shared/types'
+import { isAllowedCleanCommand } from './clean-commands'
 import {
   compilePattern,
   matchesAncestor,
@@ -19,10 +20,36 @@ export interface KnownFolderEntry {
   /** Defaults to HIGH. Use MEDIUM when the same folder name can mean different things. */
   confidence?: Confidence
   consequenceIfDeleted: string
+  /** Safe ways to clean it. Never a delete command: see clean-commands.ts. */
+  howToClean?: HowToClean
 }
 
 const VERDICTS: Verdict[] = ['SAFE', 'REBUILDS_AUTOMATICALLY', 'CAUTION', 'DONT_TOUCH']
 const CONFIDENCES: Confidence[] = ['LOW', 'MEDIUM', 'HIGH']
+
+const SETTINGS_TARGETS = ['storage', 'apps']
+
+function validateHowToClean(raw: unknown, where: string): HowToClean {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw new Error(`${where}: howToClean must be an object`)
+  const h = raw as Record<string, unknown>
+  if (typeof h.text !== 'string' || h.text.trim() === '' || h.text.length > 500) {
+    throw new Error(`${where}: howToClean.text must be 1 to 500 characters`)
+  }
+  const out: HowToClean = { text: h.text.trim() }
+  if (h.command !== undefined) {
+    // Only commands from the fixed allow-list. This is what keeps "Dirvo never deletes" true even
+    // for the advice it gives: no generic delete command can reach the screen or the clipboard.
+    if (!isAllowedCleanCommand(h.command)) throw new Error(`${where}: howToClean.command is not on the allow-list`)
+    out.command = h.command
+  }
+  if (h.settings !== undefined) {
+    if (typeof h.settings !== 'string' || !SETTINGS_TARGETS.includes(h.settings)) {
+      throw new Error(`${where}: howToClean.settings must be one of ${SETTINGS_TARGETS.join(', ')}`)
+    }
+    out.settings = h.settings as HowToClean['settings']
+  }
+  return out
+}
 
 /** Checks the raw JSON and returns typed entries. Throws a readable error on any problem. */
 export function validateDatabase(raw: unknown): KnownFolderEntry[] {
@@ -74,7 +101,8 @@ export function validateDatabase(raw: unknown): KnownFolderEntry[] {
       createdBy: text('createdBy'),
       verdict: verdict as Verdict,
       confidence: (e.confidence as Confidence | undefined) ?? 'HIGH',
-      consequenceIfDeleted: text('consequenceIfDeleted')
+      consequenceIfDeleted: text('consequenceIfDeleted'),
+      ...(e.howToClean === undefined ? {} : { howToClean: validateHowToClean(e.howToClean, `${where} (${id})`) })
     }
   })
 }

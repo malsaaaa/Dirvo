@@ -13,6 +13,7 @@ import { startScan } from './scanner/scanner'
 import { scanDrive } from './scanner/drive-scan'
 import { explainPath } from './knowledge/explain'
 import { isContainerFolder } from './knowledge/system-paths'
+import { isAllowedCleanCommand, isSettingsTarget, SETTINGS_URIS } from './knowledge/clean-commands'
 import { isProviderId, type ProviderId } from '../shared/providers'
 import type {
   ActionResult,
@@ -249,6 +250,18 @@ function registerIpc(): void {
   ipcMain.handle('clipboard:copyPath', (_e, path: unknown) => {
     if (typeof path !== 'string' || !isAbsolute(path)) throw new Error('Invalid path')
     clipboard.writeText(path)
+  })
+
+  // Cleanup advice: Dirvo only ever copies an allow-listed command or opens a Settings page.
+  // It never runs a command, and the main process re-checks everything the UI sends.
+  ipcMain.handle('clipboard:copyCommand', (_e, command: unknown) => {
+    if (!isAllowedCleanCommand(command)) throw new Error('That command is not allowed')
+    clipboard.writeText(command)
+  })
+
+  ipcMain.handle('shell:openSettings', async (_e, target: unknown) => {
+    if (!isSettingsTarget(target)) throw new Error('Unknown settings page')
+    await shell.openExternal(SETTINGS_URIS[target])
   })
 }
 
