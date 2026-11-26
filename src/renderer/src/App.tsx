@@ -3,6 +3,7 @@ import { FolderSearch, HardDrive, Rows3, Settings2, type LucideIcon } from 'luci
 import type { DriveScanItem, DriveScanOutcome } from '@shared/types'
 import Logo from './components/Logo'
 import { useDriveScan, type BreakdownControls, type ScanKind } from './hooks/useDriveScan'
+import { DEFAULT_VIEW, type LedgerView } from './lib/ledger-view'
 import { useScanner, type ScannedFolder } from './hooks/useScanner'
 import PickFolder from './screens/PickFolder'
 import Results from './screens/Results'
@@ -22,6 +23,7 @@ export default function App(): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>('pick')
   const [items, setItems] = useState<ScannedFolder[]>([])
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
+  const [view, setView] = useState<LedgerView>(DEFAULT_VIEW)
   const itemsRef = useRef<ScannedFolder[]>([])
   itemsRef.current = items
   const [lastDrive, setLastDrive] = useState<{ drive: string; outcome: DriveScanOutcome; listed: number } | null>(null)
@@ -202,6 +204,8 @@ export default function App(): React.JSX.Element {
             onRetryAi={(p) => void runAi(p)}
             onOpenSettings={() => setScreen('settings')}
             breakdown={breakdown}
+            view={view}
+            onViewChange={setView}
             note={
               lastDrive?.outcome.status === 'done'
                 ? `Drive ${lastDrive.drive} · folders of ${Math.round(lastDrive.outcome.minBytes / 1048576)} MB or more`

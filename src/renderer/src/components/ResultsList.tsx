@@ -1,29 +1,30 @@
 import { CornerDownRight } from 'lucide-react'
-import type { ScannedFolder } from '../hooks/useScanner'
 import { formatBytes, shortenPath } from '../lib/format'
-import { flattenLedger } from '../lib/tree'
+import type { LedgerRow } from '../lib/tree'
 import VerdictBadge from './VerdictBadge'
 
 interface Props {
-  items: ScannedFolder[]
+  rows: LedgerRow[]
+  /** Size of the biggest folder overall, for the share rule along each row. */
+  maxBytes: number
   selectedPath: string | null
   onSelect: (path: string) => void
+  label: string
 }
 
 const COLUMNS = 'grid grid-cols-[minmax(0,1fr)_72px_104px] items-center gap-4'
 const INDENT_PX = 20
 
 /**
- * A ledger: one row per folder. Top-level results are ranked by size; folders found by "look inside"
- * sit directly under their parent, indented, biggest first. A thin rule along the bottom of each row
+ * A ledger: one row per folder. Without a search or filter, folders found by "look inside" sit directly
+ * under their parent, indented. A thin rule along the bottom of each row
  * shows its share of the biggest folder.
  */
-export default function ResultsList({ items, selectedPath, onSelect }: Props): React.JSX.Element {
-  const rows = flattenLedger(items)
-  const max = Math.max(1, ...items.map((i) => i.metadata.sizeBytes))
+export default function ResultsList({ rows, maxBytes, selectedPath, onSelect, label }: Props): React.JSX.Element {
+  const max = Math.max(1, maxBytes)
 
   return (
-    <div role="table" aria-label="Scanned folders, largest first">
+    <div role="table" aria-label={label}>
       <div role="row" className={`${COLUMNS} sticky top-0 z-10 border-b border-line bg-page px-4 py-2 text-xs text-ink-3`}>
         <span role="columnheader">Folder</span>
         <span role="columnheader" className="text-right">

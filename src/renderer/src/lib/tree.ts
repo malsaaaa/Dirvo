@@ -10,13 +10,15 @@ export interface ForestNode {
   children: ForestNode[]
 }
 
-const bySizeDesc = (a: ForestNode, b: ForestNode): number => b.item.metadata.sizeBytes - a.item.metadata.sizeBytes
+export type FolderComparator = (a: ScannedFolder, b: ScannedFolder) => number
+
+const bySizeDesc: FolderComparator = (a, b) => b.metadata.sizeBytes - a.metadata.sizeBytes
 
 /**
  * Groups results by containment. A folder that sits inside another result becomes that result's
  * child (under its closest listed parent). Roots and every child list are sorted by size, biggest first.
  */
-export function buildForest(items: ScannedFolder[]): ForestNode[] {
+export function buildForest(items: ScannedFolder[], compare: FolderComparator = bySizeDesc): ForestNode[] {
   const nodes = items.map((item): ForestNode => ({ item, children: [] }))
   const paths = items.map((i) => normPath(i.metadata.path))
   const roots: ForestNode[] = []
@@ -33,7 +35,7 @@ export function buildForest(items: ScannedFolder[]): ForestNode[] {
   })
 
   const sortDeep = (list: ForestNode[]): void => {
-    list.sort(bySizeDesc)
+    list.sort((a, b) => compare(a.item, b.item))
     list.forEach((n) => sortDeep(n.children))
   }
   sortDeep(roots)
@@ -46,8 +48,8 @@ export interface LedgerRow {
   depth: number
 }
 
-/** The ledger order: each top-level result, then the folders inside it, biggest first at every level. */
-export function flattenLedger(items: ScannedFolder[]): LedgerRow[] {
+/** The ledger order: each top-level result, then the folders inside it, sorted the same way at every level. */
+export function flattenLedger(items: ScannedFolder[], compare: FolderComparator = bySizeDesc): LedgerRow[] {
   const rows: LedgerRow[] = []
   const walk = (list: ForestNode[], depth: number): void => {
     for (const n of list) {
@@ -55,6 +57,6 @@ export function flattenLedger(items: ScannedFolder[]): LedgerRow[] {
       walk(n.children, depth + 1)
     }
   }
-  walk(buildForest(items), 0)
+  walk(buildForest(items, compare), 0)
   return rows
 }
