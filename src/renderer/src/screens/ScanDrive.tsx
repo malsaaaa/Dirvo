@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { DriveScanOutcome } from '@shared/types'
+import type { DriveInfo, DriveScanOutcome } from '@shared/types'
 import Button from '../components/Button'
 import type { DriveScanState } from '../hooks/useDriveScan'
 import { formatBytes, formatCount, shortenPath } from '../lib/format'
@@ -16,6 +16,49 @@ interface Props {
   onViewResults: () => void
 }
 
+/** How full a drive is, as a bar. It turns amber when the drive is nearly full. */
+function DriveRow({ drive, disabled, onScan }: { drive: DriveInfo; disabled: boolean; onScan: () => void }): React.JSX.Element {
+  const { totalBytes, freeBytes } = drive
+  const known = totalBytes !== null && freeBytes !== null && totalBytes > 0
+  const used = known ? totalBytes - freeBytes : 0
+  const fraction = known ? used / totalBytes : 0
+
+  return (
+    <li className="flex items-center gap-6 rounded-lg border border-line bg-surface p-4">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="font-mono text-base font-medium">{drive.path}</span>
+          {known && (
+            <span className="font-mono text-xs tabular-nums text-ink-3">
+              {formatBytes(used)} used of {formatBytes(totalBytes)}
+            </span>
+          )}
+        </div>
+        {known ? (
+          <>
+            <div
+              role="img"
+              aria-label={`${Math.round(fraction * 100)} percent full, ${formatBytes(freeBytes)} free`}
+              className="mt-3 h-2 overflow-hidden rounded-sm bg-track"
+            >
+              <div className={`h-full rounded-sm ${fraction >= 0.9 ? 'bg-warn-dot' : 'bg-bar'}`} style={{ width: `${Math.max(1, fraction * 100)}%` }} />
+            </div>
+            <p className={`mt-2 text-xs ${fraction >= 0.9 ? 'text-warn-text' : 'text-ink-3'}`}>
+              <span className="font-mono tabular-nums">{formatBytes(freeBytes)}</span> free
+              {fraction >= 0.9 && ' · nearly full'}
+            </p>
+          </>
+        ) : (
+          <p className="mt-2 text-xs text-ink-3">Space details are not available for this drive</p>
+        )}
+      </div>
+      <Button variant="primary" onClick={onScan} disabled={disabled}>
+        Scan drive
+      </Button>
+    </li>
+  )
+}
+
 export default function ScanDrive({
   scanner,
   last,
@@ -25,7 +68,7 @@ export default function ScanDrive({
   onDismissError,
   onViewResults
 }: Props): React.JSX.Element {
-  const [drives, setDrives] = useState<string[] | null>(null)
+  const [drives, setDrives] = useState<DriveInfo[] | null>(null)
   useEffect(() => {
     void window.dirvo.listDrives().then(setDrives)
   }, [])
@@ -38,7 +81,7 @@ export default function ScanDrive({
         <h1 className="text-3xl font-medium">Scan a drive</h1>
         <p className="mt-2 text-ink-2">
           Find what is taking up space. Dirvo looks inside Windows, Program Files, user profiles and AppData, scans
-          each folder, and lists the big ones with an explanation. Only names, sizes and dates are read.
+          each folder, and rules on the big ones. Only names, sizes and dates are read.
         </p>
       </header>
 
@@ -47,26 +90,21 @@ export default function ScanDrive({
       ) : drives.length === 0 ? (
         <p className="text-sm text-ink-3">No drives found</p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-3">
           {drives.map((d) => (
-            <li key={d} className="flex h-14 items-center justify-between rounded-xl border border-line bg-surface pl-5 pr-3">
-              <span className="font-mono text-sm font-medium">{d}</span>
-              <Button variant="primary" onClick={() => onScan(d)} disabled={scanning || folderScanBusy}>
-                Scan drive
-              </Button>
-            </li>
+            <DriveRow key={d.path} drive={d} disabled={scanning || folderScanBusy} onScan={() => onScan(d.path)} />
           ))}
         </ul>
       )}
 
       {scanner.status === 'scanning' && (
-        <div className="rounded-xl border border-line bg-surface p-5" aria-live="polite">
+        <div className="rounded-lg border border-line bg-surface p-5" aria-live="polite">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="text-sm font-medium">
                 Scanning <span className="font-mono">{scanner.drive}</span>
               </p>
-              <p className="mt-1 text-xs tabular-nums text-ink-3">
+              <p className="mt-1 font-mono text-xs tabular-nums text-ink-3">
                 {scanner.progress
                   ? `${formatCount(scanner.progress.foldersScanned)} folders done · ${formatBytes(scanner.progress.bytesScanned)} so far · ${formatCount(scanner.listed)} listed`
                   : 'Starting…'}
@@ -74,8 +112,8 @@ export default function ScanDrive({
             </div>
             <Button onClick={onCancel}>Cancel</Button>
           </div>
-          <div className="mt-4 h-1 overflow-hidden rounded-full bg-raised">
-            <div className="h-full w-1/3 animate-[slide_1.2s_ease-in-out_infinite] rounded-full bg-accent" />
+          <div className="mt-4 h-1 overflow-hidden rounded-full bg-track">
+            <div className="h-full w-1/3 animate-[slide_1.2s_ease-in-out_infinite] rounded-full bg-ink" />
           </div>
           <ul className="mt-3 space-y-1 font-mono text-xs text-ink-3">
             {(scanner.progress?.current ?? []).map((c) => (
@@ -91,7 +129,7 @@ export default function ScanDrive({
       )}
 
       {scanner.status === 'error' && (
-        <div role="alert" className="flex items-start justify-between gap-4 rounded-xl border border-bad-line bg-bad-bg p-5 text-sm text-bad-ink">
+        <div role="alert" className="flex items-start justify-between gap-4 rounded-lg border border-bad-line bg-bad-bg p-5 text-sm text-bad-ink">
           <div>
             <p className="font-medium">Could not scan the drive</p>
             <p className="mt-1">{scanner.message}</p>
@@ -103,7 +141,7 @@ export default function ScanDrive({
       )}
 
       {!scanning && last && last.outcome.status !== 'error' && (
-        <div className="rounded-xl border border-line bg-surface p-5 text-sm">
+        <div className="rounded-lg border border-line bg-surface p-5 text-sm">
           {last.outcome.status === 'done' ? (
             <>
               <p className="font-medium">

@@ -3,6 +3,7 @@ import { FolderOpen } from 'lucide-react'
 import Button, { INPUT_CLASS } from '../components/Button'
 import ScanStatus from '../components/ScanStatus'
 import type { ScannerState } from '../hooks/useScanner'
+import { VERDICT_STYLE } from '../lib/verdict'
 
 interface Props {
   scanner: ScannerState
@@ -12,6 +13,8 @@ interface Props {
   onCancel: () => void
   onDismissError: () => void
 }
+
+const RULINGS = ['SAFE', 'REBUILDS_AUTOMATICALLY', 'CAUTION', 'DONT_TOUCH'] as const
 
 export default function PickFolder({ scanner, blocked, onScan, onCancel, onDismissError }: Props): React.JSX.Element {
   const [typed, setTyped] = useState('')
@@ -25,49 +28,65 @@ export default function PickFolder({ scanner, blocked, onScan, onCancel, onDismi
   }
 
   return (
-    <div className="flex max-w-2xl flex-col gap-6 p-8">
+    <div className="flex max-w-2xl flex-col gap-8 p-8">
       <header>
         <h1 className="text-3xl font-medium">Explain a folder</h1>
         <p className="mt-2 text-ink-2">
-          Pick a mystery folder. Dirvo looks only at names, sizes and dates, never at what is inside your files, and
-          tells you what it is and whether it is safe to delete.
+          Point Dirvo at a folder you don&apos;t recognise. It reads only names, sizes and dates, never what is inside
+          your files, and gives a ruling: what it is, who made it, and whether you can delete it.
         </p>
       </header>
 
-      <button
-        type="button"
-        onClick={() => void browse()}
-        disabled={busy}
-        className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-line-strong bg-surface px-6 py-12 text-ink transition-colors duration-150 ease-out-soft hover:border-faint hover:bg-hover disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <FolderOpen size={24} strokeWidth={1.5} className="text-ink-3" aria-hidden />
-        <span className="text-base font-medium">Choose a folder…</span>
-        <span className="text-xs text-ink-3">Opens the Windows folder picker</span>
-      </button>
-
       <form
-        className="flex gap-2"
+        className="flex flex-col gap-2"
         onSubmit={(ev) => {
           ev.preventDefault()
           if (typedOk && !busy) onScan(typed.trim())
         }}
       >
-        <input
-          value={typed}
-          onChange={(ev) => setTyped(ev.target.value)}
-          placeholder="…or paste a path, e.g. C:\Users\you\AppData\Local\Temp"
-          aria-label="Folder path"
-          spellCheck={false}
-          className={`${INPUT_CLASS} font-mono`}
-        />
-        <Button type="submit" variant="primary" disabled={!typedOk || busy}>
-          Explain
-        </Button>
+        <label htmlFor="folder-path" className="text-sm font-medium text-ink-2">
+          Folder path
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="folder-path"
+            value={typed}
+            onChange={(ev) => setTyped(ev.target.value)}
+            placeholder="C:\Users\you\AppData\Local\Something"
+            spellCheck={false}
+            autoComplete="off"
+            className={`${INPUT_CLASS} h-11 font-mono`}
+          />
+          <Button type="button" className="h-11" onClick={() => void browse()} disabled={busy}>
+            <FolderOpen size={16} strokeWidth={1.5} aria-hidden />
+            Browse
+          </Button>
+          <Button type="submit" variant="primary" className="h-11" disabled={!typedOk || busy}>
+            Explain
+          </Button>
+        </div>
       </form>
 
       {blocked && <p className="text-sm text-ink-2">A drive scan is running. Folder scans are available when it finishes.</p>}
 
       <ScanStatus state={scanner} onCancel={onCancel} onDismissError={onDismissError} />
+
+      <section aria-labelledby="rulings">
+        <h2 id="rulings" className="text-sm font-medium text-ink-2">
+          The four rulings
+        </h2>
+        <ul className="mt-3 divide-y divide-line border-y border-line">
+          {RULINGS.map((r) => (
+            <li key={r} className="grid grid-cols-[168px_minmax(0,1fr)] items-center gap-4 py-3">
+              <span className={`inline-flex items-center gap-2 text-sm font-medium ${VERDICT_STYLE[r].text}`}>
+                <span className={`h-2 w-2 rounded-full ${VERDICT_STYLE[r].dot}`} />
+                {VERDICT_STYLE[r].label}
+              </span>
+              <span className="text-sm text-ink-2">{VERDICT_STYLE[r].meaning}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   )
 }

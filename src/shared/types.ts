@@ -80,6 +80,13 @@ export type ScanOutcome =
   | { status: 'cancelled' }
   | { status: 'error'; message: string }
 
+/** A drive on this PC. Sizes are null if Windows would not report them. */
+export interface DriveInfo {
+  path: string
+  totalBytes: number | null
+  freeBytes: number | null
+}
+
 export interface DriveScanItem {
   metadata: FolderMetadata
   /** Offline answer only. Unknown folders are not sent to the AI automatically during a drive scan. */
@@ -120,8 +127,8 @@ export interface DirvoApi {
   cancelScan: (scanId: string) => Promise<void>
   /** Opens the Windows folder picker. Null if the user cancels. */
   pickFolder: () => Promise<string | null>
-  /** Drive roots that exist on this PC, e.g. ["C:\\", "D:\\"]. */
-  listDrives: () => Promise<string[]>
+  /** Drives that exist on this PC, with how much space is used. */
+  listDrives: () => Promise<DriveInfo[]>
   /** Offline lookup: system rules, then the known-folder database. Null means unknown. */
   explainFolder: (path: string) => Promise<FolderExplanation | null>
   /** Asks the AI about a folder Dirvo does not know. Only sanitised metadata leaves the PC. */
@@ -144,4 +151,16 @@ export interface DirvoApi {
   onDriveEvent: (cb: (event: DriveScanEvent) => void) => () => void
   /** Returns an unsubscribe function. */
   onScanProgress: (cb: (scanId: string, progress: ScanProgress) => void) => () => void
+}
+
+/** 'none': nothing pending. 'loading': asking the AI. 'no-key': AI needed but no key is set up. */
+export type AiStatus = 'none' | 'loading' | 'no-key' | 'error'
+
+/** One result in the list: what the scanner found, plus Dirvo's answer if it has one. */
+export interface ScannedFolder {
+  metadata: FolderMetadata
+  /** Null while unknown (offline lookup found nothing and the AI has not answered). */
+  explanation: FolderExplanation | null
+  aiStatus: AiStatus
+  aiError?: string
 }

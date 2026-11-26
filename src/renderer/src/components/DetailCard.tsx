@@ -10,20 +10,12 @@ const SOURCE_LABEL = {
   ai: 'AI estimate'
 } as const
 
-function Section({ title, children }: { title: string; children: React.ReactNode }): React.JSX.Element {
+/** One line of the tag: a muted label on the left, the value on the right. */
+function Row({ label, children, mono = false }: { label: string; children: React.ReactNode; mono?: boolean }): React.JSX.Element {
   return (
-    <section>
-      <h3 className="text-sm font-medium text-ink-3">{title}</h3>
-      <div className="mt-1 text-sm leading-relaxed text-ink">{children}</div>
-    </section>
-  )
-}
-
-function Stat({ label, value, mono = false }: { label: string; value: string; mono?: boolean }): React.JSX.Element {
-  return (
-    <div>
-      <dt className="text-xs text-ink-3">{label}</dt>
-      <dd className={`mt-1 text-base font-medium tabular-nums text-ink ${mono ? 'font-mono' : ''}`}>{value}</dd>
+    <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-4 py-3">
+      <dt className="text-sm text-ink-3">{label}</dt>
+      <dd className={`text-sm leading-relaxed text-ink ${mono ? 'font-mono tabular-nums' : ''}`}>{children}</dd>
     </div>
   )
 }
@@ -34,12 +26,12 @@ interface Props {
   onOpenSettings: () => void
 }
 
-const PANEL = 'rounded-xl border p-5 text-sm'
+const PANEL = 'rounded-lg border p-4 text-sm'
 
 function UnknownPanel({ item, onRetryAi, onOpenSettings }: Props): React.JSX.Element {
   if (item.aiStatus === 'loading') {
     return (
-      <div className={`${PANEL} border-line bg-surface`} aria-live="polite">
+      <div className={`${PANEL} border-line bg-hover`} aria-live="polite">
         <p className="font-medium">Asking the AI about this folder…</p>
         <p className="mt-1 text-ink-2">Only its name, size, counts and a few file names are sent. Never file contents.</p>
       </div>
@@ -47,7 +39,7 @@ function UnknownPanel({ item, onRetryAi, onOpenSettings }: Props): React.JSX.Ele
   }
   if (item.aiStatus === 'no-key') {
     return (
-      <div className={`${PANEL} border-line bg-surface`}>
+      <div className={`${PANEL} border-line bg-hover`}>
         <p className="font-medium">Dirvo doesn&apos;t recognise this folder</p>
         <p className="mt-1 text-ink-2">
           Add an API key for an AI provider in Settings and Dirvo can ask it to explain this folder. Until then, treat it
@@ -74,7 +66,7 @@ function UnknownPanel({ item, onRetryAi, onOpenSettings }: Props): React.JSX.Ele
     )
   }
   return (
-    <div className={`${PANEL} border-line bg-surface`}>
+    <div className={`${PANEL} border-line bg-hover`}>
       <p className="font-medium">Dirvo doesn&apos;t recognise this folder</p>
       <p className="mt-1 text-ink-2">Treat it as important until you know what created it, or ask the AI to take a look.</p>
       <Button variant="primary" onClick={onRetryAi} className="mt-4">
@@ -97,14 +89,15 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings }: Props): 
   const topTypes = Object.entries(m.extensionCounts).slice(0, 8)
 
   return (
-    <article className="flex flex-col gap-6">
+    <article className="flex flex-col gap-5">
       <header>
         <h2 className="min-w-0 break-words text-xl font-medium">{m.name}</h2>
-        <p className="mt-1 break-all font-mono text-xs text-ink-3">{m.path}</p>
+        <p className="mt-2 break-all font-mono text-xs leading-relaxed text-ink-3">{m.path}</p>
       </header>
 
       {e ? (
-        <div className={`rounded-xl border p-5 ${VERDICT_STYLE[e.verdict].banner}`}>
+        // The ruling: the answer to "can I delete this?", with the verdict colour down its left edge.
+        <div className={`rounded-lg border border-l-4 p-4 ${VERDICT_STYLE[e.verdict].banner} ${VERDICT_STYLE[e.verdict].bar}`}>
           <p className="text-base font-medium">{VERDICT_STYLE[e.verdict].label}</p>
           <p className="mt-1 text-sm">{VERDICT_STYLE[e.verdict].meaning}</p>
         </div>
@@ -113,7 +106,7 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings }: Props): 
       )}
 
       {e && e.downgradedFrom && (
-        <p className="rounded-lg bg-warn-bg px-4 py-3 text-xs text-warn-ink">
+        <p className="rounded-lg bg-warn-bg px-4 py-3 text-xs leading-relaxed text-warn-ink">
           {e.downgradeReason === 'contradiction'
             ? 'The AI called this safe, but its own explanation says deleting it can cause problems, so Dirvo changed its verdict'
             : 'The AI was not confident, so Dirvo changed its verdict'}{' '}
@@ -121,49 +114,56 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings }: Props): 
         </p>
       )}
 
-      {e && (
-        <div className="flex flex-col gap-4">
-          <Section title="What it is">{e.whatItIs}</Section>
-          <Section title="Created by">{e.createdBy}</Section>
-          <Section title="If you delete it">{e.consequenceIfDeleted}</Section>
-          <p className="text-xs text-ink-3">
-            {SOURCE_LABEL[e.source]} · {e.confidence.toLowerCase()} confidence
-            {e.source === 'ai' && ' · an estimate from metadata only, so double-check before deleting'}
-          </p>
-        </div>
-      )}
-
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl border border-line bg-surface p-5 sm:grid-cols-3">
-        <Stat label="Size" value={formatBytes(m.sizeBytes)} mono />
-        <Stat label="Files" value={formatCount(m.fileCount)} mono />
-        <Stat label="Subfolders" value={formatCount(m.dirCount)} mono />
-        <Stat label="Created" value={formatDate(m.createdAt)} />
-        <Stat label="Last changed" value={formatDate(m.modifiedAt)} />
-        <Stat label="Newest file" value={formatDate(m.newestFileAt)} />
+      <dl className="divide-y divide-line border-y border-line">
+        {e && (
+          <>
+            <Row label="What it is">{e.whatItIs}</Row>
+            <Row label="Made by">{e.createdBy}</Row>
+            <Row label="If deleted">{e.consequenceIfDeleted}</Row>
+          </>
+        )}
+        <Row label="Size" mono>
+          {formatBytes(m.sizeBytes)}
+        </Row>
+        <Row label="Contents" mono>
+          {formatCount(m.fileCount)} files · {formatCount(m.dirCount)} folders
+        </Row>
+        <Row label="Created">{formatDate(m.createdAt)}</Row>
+        <Row label="Changed">
+          {formatDate(m.modifiedAt)}
+          <span className="text-ink-3"> · newest file {formatDate(m.newestFileAt)}</span>
+        </Row>
+        {topTypes.length > 0 && (
+          <Row label="File types" mono>
+            <span className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-2">
+              {topTypes.map(([ext, count]) => (
+                <span key={ext}>
+                  {ext} <span className="text-ink-3">×{formatCount(count)}</span>
+                </span>
+              ))}
+            </span>
+          </Row>
+        )}
+        {e && (
+          <Row label="Source">
+            <span className="text-ink-2">
+              {SOURCE_LABEL[e.source]} · {e.confidence.toLowerCase()} confidence
+            </span>
+            {e.source === 'ai' && <span className="mt-1 block text-xs text-ink-3">An estimate from metadata only, so double-check before deleting</span>}
+          </Row>
+        )}
       </dl>
 
       {m.unreadableCount > 0 && (
-        <p className="rounded-lg bg-warn-bg px-4 py-3 text-xs text-warn-ink">
+        <p className="rounded-lg bg-warn-bg px-4 py-3 text-xs leading-relaxed text-warn-ink">
           {formatCount(m.unreadableCount)} item{m.unreadableCount === 1 ? '' : 's'} could not be read (permissions), so
           the size may be higher than shown
         </p>
       )}
 
-      {topTypes.length > 0 && (
-        <Section title="Top file types">
-          <ul className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-ink-2">
-            {topTypes.map(([ext, count]) => (
-              <li key={ext}>
-                {ext} <span className="tabular-nums text-ink-3">× {formatCount(count)}</span>
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
-
       {m.sampleFileNames.length > 0 && (
-        <details className="rounded-xl border border-line bg-surface p-4 text-sm">
-          <summary className="cursor-pointer select-none font-medium text-ink">
+        <details className="text-sm">
+          <summary className="cursor-pointer select-none text-ink-2 hover:text-ink">
             Sample file names <span className="font-mono text-xs tabular-nums text-ink-3">{m.sampleFileNames.length}</span>
           </summary>
           <ul className="mt-3 max-h-48 overflow-auto font-mono text-xs text-ink-2">
@@ -176,14 +176,14 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings }: Props): 
         </details>
       )}
 
-      <footer className="flex flex-wrap items-center gap-2 border-t border-line pt-6">
+      <footer className="flex flex-wrap items-center gap-2 pt-1">
         <Button onClick={() => void window.dirvo.openInExplorer(m.path)}>Open in Explorer</Button>
         <Button onClick={() => void copy()}>Copy path</Button>
         <span className="text-xs text-ok-text" aria-live="polite">
           {feedback}
         </span>
-        <span className="ml-auto text-xs text-ink-3">Dirvo never deletes anything</span>
       </footer>
+      <p className="text-xs text-ink-3">Dirvo never deletes anything</p>
     </article>
   )
 }

@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
+import { FolderSearch, HardDrive, Rows3, Settings2, type LucideIcon } from 'lucide-react'
 import type { DriveScanItem, DriveScanOutcome } from '@shared/types'
 import { useDriveScan } from './hooks/useDriveScan'
 import { useScanner, type ScannedFolder } from './hooks/useScanner'
@@ -9,11 +10,11 @@ import Settings from './screens/Settings'
 
 type Screen = 'pick' | 'drive' | 'results' | 'settings'
 
-const NAV: Array<{ id: Screen; label: string }> = [
-  { id: 'pick', label: 'Explain a folder' },
-  { id: 'drive', label: 'Scan a drive' },
-  { id: 'results', label: 'Results' },
-  { id: 'settings', label: 'Settings' }
+const NAV: Array<{ id: Screen; label: string; Icon: LucideIcon }> = [
+  { id: 'pick', label: 'Explain a folder', Icon: FolderSearch },
+  { id: 'drive', label: 'Scan a drive', Icon: HardDrive },
+  { id: 'results', label: 'Results', Icon: Rows3 },
+  { id: 'settings', label: 'Settings', Icon: Settings2 }
 ]
 
 export default function App(): React.JSX.Element {
@@ -102,28 +103,28 @@ export default function App(): React.JSX.Element {
 
   return (
     <div className="flex h-screen">
-      <nav className="flex w-60 shrink-0 flex-col gap-0.5 border-r border-line bg-surface p-4" aria-label="Main">
+      <nav className="flex w-56 shrink-0 flex-col gap-0.5 border-r border-line bg-surface p-4" aria-label="Main">
         <div className="px-3 pb-6 pt-1">
-          <p className="text-lg font-medium">Dirvo</p>
+          {/* The wordmark is set in mono, like the paths and sizes the app is about. */}
+          <p className="font-mono text-lg font-medium">Dirvo</p>
           <p className="mt-1 text-xs text-ink-3">Mystery folders, explained</p>
         </div>
-        {NAV.map((n) => (
+        {NAV.map(({ id, label, Icon }) => (
           <button
-            key={n.id}
-            onClick={() => setScreen(n.id)}
-            aria-current={screen === n.id ? 'page' : undefined}
-            className={`flex h-9 items-center justify-between rounded-lg px-3 text-left text-sm font-medium transition-colors duration-150 ease-out-soft ${
-              screen === n.id ? 'bg-raised text-ink' : 'text-ink-2 hover:bg-raised hover:text-ink'
+            key={id}
+            onClick={() => setScreen(id)}
+            aria-current={screen === id ? 'page' : undefined}
+            className={`flex h-9 items-center gap-3 rounded-lg px-3 text-left text-sm font-medium transition-colors duration-150 ease-out-soft ${
+              screen === id ? 'bg-raised text-ink' : 'text-ink-2 hover:bg-raised hover:text-ink'
             }`}
           >
-            {n.label}
-            {n.id === 'results' && items.length > 0 && (
+            <Icon size={16} strokeWidth={1.5} className="shrink-0 text-ink-3" aria-hidden />
+            <span className="flex-1">{label}</span>
+            {id === 'results' && items.length > 0 && (
               <span className="font-mono text-xs tabular-nums text-ink-3">{items.length}</span>
             )}
-            {n.id === 'drive' && driveBusy && (
-              <span className="h-2 w-2 animate-pulse rounded-full bg-accent" title="Scanning a drive" />
-            )}
-            {n.id === 'settings' && unknownWaiting > 0 && (
+            {id === 'drive' && driveBusy && <span className="h-2 w-2 animate-pulse rounded-full bg-ink" title="Scanning a drive" />}
+            {id === 'settings' && unknownWaiting > 0 && (
               <span className="h-2 w-2 rounded-full bg-warn-dot" title="An API key is needed to explain unknown folders" />
             )}
           </button>

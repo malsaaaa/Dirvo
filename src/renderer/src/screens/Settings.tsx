@@ -10,7 +10,7 @@ interface Props {
 }
 
 const LABEL = 'text-sm font-medium text-ink-2'
-const CARD = 'rounded-xl border border-line bg-surface p-5'
+const CARD = 'rounded-lg border border-line bg-surface p-5'
 
 export default function Settings({ onAiChanged }: Props): React.JSX.Element {
   const [cfg, setCfg] = useState<AiConfig | null>(null)

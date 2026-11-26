@@ -4,19 +4,23 @@
   Theme tokens. Components only use these names (bg-surface, text-ink, ...), never raw colours,
   so the whole look is defined here. Light values live in @theme; the .dark block swaps them.
   Dark is the default: <html class="dark"> is set in index.html and by lib/theme.ts.
+
+  There is no accent hue on purpose. The chrome is graphite and the primary button is plain
+  ink-on-paper, so the four verdict colours are the only colour in the app and read instantly.
 */
 @theme {
-  /* Paths, sizes and counts are the evidence in this app, so they get a real mono face.
-     These ship with Windows, so nothing is downloaded. */
-  --font-mono: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  /* Geist is bundled with the app (see main.tsx), so it works offline. */
+  --font-sans: 'Geist Variable', 'Segoe UI', system-ui, sans-serif;
+  /* Paths, sizes and counts are the evidence in this app, so they get a real mono face. */
+  --font-mono: 'Geist Mono Variable', 'Cascadia Mono', Consolas, 'Courier New', monospace;
   /* One easing curve for every transition. */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* Neutral ramp */
   --color-page: #fafafa;
   --color-surface: #ffffff;
-  --color-hover: #fafafa;
-  --color-raised: #f4f4f5;
+  --color-hover: #f4f4f5;
+  --color-raised: #f0f0f2;
   --color-track: #e4e4e7;
   --color-line: #e4e4e7;
   --color-line-strong: #d4d4d8;
@@ -26,10 +30,10 @@
   --color-faint: #a1a1aa;
   --color-bar: #71717a;
 
-  /* The one accent: primary action, focus and progress */
-  --color-accent: #4f46e5;
-  --color-accent-hover: #4338ca;
-  --color-accent-ring: #4f46e5;
+  /* Primary action: ink on paper, not a colour */
+  --color-primary: #18181b;
+  --color-primary-hover: #3f3f46;
+  --color-on-primary: #fafafa;
 
   /* Verdict and status colours. They carry meaning, so they stay in both themes. */
   --color-ok-bg: #ecfdf5;
@@ -61,11 +65,11 @@
   color-scheme: dark;
 
   --color-page: #0e0e10;
-  --color-surface: #161618;
-  --color-hover: #1d1d20;
-  --color-raised: #232327;
+  --color-surface: #141416;
+  --color-hover: #1a1a1d;
+  --color-raised: #212125;
   --color-track: #2a2a2f;
-  --color-line: #2a2a2f;
+  --color-line: #26262b;
   --color-line-strong: #3a3a40;
   --color-ink: #ededee;
   --color-ink-2: #a8a8b0;
@@ -73,9 +77,9 @@
   --color-faint: #6b6b73;
   --color-bar: #8b8b93;
 
-  --color-accent: #5b54e8;
-  --color-accent-hover: #6e68f0;
-  --color-accent-ring: #8b86f5;
+  --color-primary: #ededee;
+  --color-primary-hover: #ffffff;
+  --color-on-primary: #0e0e10;
 
   --color-ok-bg: #0c261d;
   --color-ok-line: #1b4a3a;
@@ -111,6 +115,21 @@
   }
 }
 
+/* The space bar fills in once when it appears. */
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.animate-grow {
+  transform-origin: left;
+  animation: grow 600ms var(--ease-out-soft) both;
+}
+
 html,
 body,
 #root {
@@ -119,13 +138,14 @@ body,
 
 body {
   @apply bg-page text-ink antialiased;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-feature-settings: 'ss01', 'cv11';
 }
 
 button:focus-visible,
 input:focus-visible,
+select:focus-visible,
 summary:focus-visible {
-  @apply outline-2 outline-offset-2 outline-accent-ring;
+  @apply outline-2 outline-offset-2 outline-ink-2;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,21 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { FolderExplanation, FolderMetadata, ScanProgress } from '@shared/types'
+import type { ScannedFolder, ScanProgress } from '@shared/types'
+
+export type { AiStatus, ScannedFolder } from '@shared/types'
 
 export type ScannerState =
   | { status: 'idle' }
   | { status: 'scanning'; path: string; progress: ScanProgress | null }
   | { status: 'error'; message: string }
-
-/** 'none': nothing pending. 'loading': asking the AI. 'no-key': AI needed but no API key saved. */
-export type AiStatus = 'none' | 'loading' | 'no-key' | 'error'
-
-export interface ScannedFolder {
-  metadata: FolderMetadata
-  /** Null while unknown (offline lookup found nothing and the AI has not answered). */
-  explanation: FolderExplanation | null
-  aiStatus: AiStatus
-  aiError?: string
-}
 
 /** Runs one folder scan at a time and reports the finished result to `onDone`. */
 export function useScanner(onDone: (item: ScannedFolder) => void): {

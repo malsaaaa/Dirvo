@@ -16,6 +16,7 @@ import type {
   ActionResult,
   AiConfig,
   AiConfigInput,
+  DriveInfo,
   DriveScanEvent,
   DriveScanOutcome,
   FolderExplanation,
@@ -26,8 +27,8 @@ function createWindow(): void {
   const win = new BrowserWindow({
     width: 1100,
     height: 720,
-    minWidth: 800,
-    minHeight: 560,
+    minWidth: 960,
+    minHeight: 600,
     show: false,
     // Matches the dark theme, which is the default, so there is no white flash on start.
     backgroundColor: '#0e0e10',
@@ -134,17 +135,26 @@ function registerIpc(): void {
     }
   })
 
-  ipcMain.handle('drives:list',async (): Promise<string[]> => {
+  ipcMain.handle('drives:list', async (): Promise<DriveInfo[]> => {
     const letters = 'CDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
     const found = await Promise.all(
-      letters.map((l) =>
-        fsp.access(`${l}:\\`).then(
-          () => `${l}:\\`,
-          () => null
-        )
-      )
+      letters.map(async (l): Promise<DriveInfo | null> => {
+        const path = `${l}:\\`
+        try {
+          await fsp.access(path)
+        } catch {
+          return null
+        }
+        try {
+          const s = await fsp.statfs(path)
+          const unit = Number(s.bsize)
+          return { path, totalBytes: Number(s.blocks) * unit, freeBytes: Number(s.bavail) * unit }
+        } catch {
+          return { path, totalBytes: null, freeBytes: null }
+        }
+      })
     )
-    return found.filter((d): d is string => d !== null)
+    return found.filter((d): d is DriveInfo => d !== null)
   })
 
   ipcMain.handle('folder:explain',(_e, path: unknown): FolderExplanation | null => {

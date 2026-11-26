@@ -1,7 +1,10 @@
 import Button from '../components/Button'
 import DetailCard from '../components/DetailCard'
+import ReclaimBand from '../components/ReclaimBand'
 import ResultsList from '../components/ResultsList'
 import type { ScannedFolder } from '../hooks/useScanner'
+import { formatCount } from '../lib/format'
+import { summarize } from '../lib/summary'
 
 interface Props {
   items: ScannedFolder[]
@@ -37,36 +40,39 @@ export default function Results({
     )
   }
 
-  // With nothing selected, show the biggest folder (the list is ranked by size).
+  // With nothing selected, show the biggest folder (the ledger is ranked by size).
   const biggest = items.reduce((a, b) => (b.metadata.sizeBytes > a.metadata.sizeBytes ? b : a))
   const selected = items.find((i) => i.metadata.path === selectedPath) ?? biggest
 
   return (
-    <div className="flex h-full min-h-0">
-      <aside className="flex w-80 shrink-0 flex-col border-r border-line bg-surface">
-        <div className="flex h-14 items-center justify-between pl-4 pr-3">
-          <h1 className="text-sm font-medium">
-            Results <span className="font-mono tabular-nums text-ink-3">{items.length}</span>
-          </h1>
-          <Button variant="ghost" onClick={onClear} className="h-8 text-xs">
-            Clear list
-          </Button>
-        </div>
-        {note && <p className="px-4 pb-3 text-xs text-ink-3">{note}</p>}
-        <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
-          <ResultsList items={items} selectedPath={selected.metadata.path} onSelect={onSelect} />
-        </div>
-      </aside>
-      <section className="min-w-0 flex-1 overflow-y-auto p-8">
-        <div className="max-w-3xl">
+    <div className="flex h-full min-h-0 flex-col">
+      {items.length > 1 && <ReclaimBand summary={summarize(items)} note={note} />}
+
+      <div className="flex min-h-0 flex-1">
+        <section className="flex min-w-0 flex-1 flex-col">
+          <div className="flex h-14 shrink-0 items-center justify-between pl-4 pr-3">
+            <h1 className="text-sm font-medium">
+              Folders <span className="font-mono tabular-nums text-ink-3">{formatCount(items.length)}</span>
+              <span className="text-ink-3"> · largest first</span>
+            </h1>
+            <Button variant="ghost" onClick={onClear} className="h-8 text-xs">
+              Clear list
+            </Button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <ResultsList items={items} selectedPath={selected.metadata.path} onSelect={onSelect} />
+          </div>
+        </section>
+
+        <aside className="w-96 shrink-0 overflow-y-auto border-l border-line bg-surface p-6">
           <DetailCard
             key={selected.metadata.path}
             item={selected}
             onRetryAi={() => onRetryAi(selected.metadata.path)}
             onOpenSettings={onOpenSettings}
           />
-        </div>
-      </section>
+        </aside>
+      </div>
     </div>
   )
 }

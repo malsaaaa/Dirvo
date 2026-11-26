@@ -14,7 +14,7 @@ export default function ScanStatus({ state, onCancel, onDismissError }: Props): 
 
   if (state.status === 'error') {
     return (
-      <div role="alert" className="flex items-start justify-between gap-4 rounded-xl border border-bad-line bg-bad-bg p-5 text-sm text-bad-ink">
+      <div role="alert" className="flex items-start justify-between gap-4 rounded-lg border border-bad-line bg-bad-bg p-5 text-sm text-bad-ink">
         <div>
           <p className="font-medium">Could not scan that folder</p>
           <p className="mt-1">{state.message}</p>
@@ -28,7 +28,7 @@ export default function ScanStatus({ state, onCancel, onDismissError }: Props): 
 
   const p = state.progress
   return (
-    <div className="rounded-xl border border-line bg-surface p-5" aria-live="polite">
+    <div className="rounded-lg border border-line bg-surface p-5" aria-live="polite">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">
@@ -40,8 +40,8 @@ export default function ScanStatus({ state, onCancel, onDismissError }: Props): 
         </div>
         <Button onClick={onCancel}>Cancel</Button>
       </div>
-      <div className="mt-4 h-1 overflow-hidden rounded-full bg-raised">
-        <div className="h-full w-1/3 animate-[slide_1.2s_ease-in-out_infinite] rounded-full bg-accent" />
+      <div className="mt-4 h-1 overflow-hidden rounded-full bg-track">
+        <div className="h-full w-1/3 animate-[slide_1.2s_ease-in-out_infinite] rounded-full bg-ink" />
       </div>
       <p className="mt-3 truncate font-mono text-xs text-ink-3">{p ? shortenPath(p.currentPath, 90) : ''}</p>
     </div>
