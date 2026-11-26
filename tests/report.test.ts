@@ -264,3 +264,39 @@ describe('validateReportRequest / prepareContent', () => {
     expect(prepareContent({ ...ok, format: 'md' }, []).startsWith('\uFEFF')).toBe(false)
   })
 })
+
+describe('idle time in reports', () => {
+  const old = (path: string, size: number, verdict: Verdict | null): ScannedFolder => {
+    const base = item(path, size, verdict)
+    return { ...base, metadata: { ...base.metadata, newestFileAt: '2023-01-01T00:00:00.000Z', modifiedAt: '2023-01-01T00:00:00.000Z' } }
+  }
+  const recent = (path: string, size: number, verdict: Verdict | null): ScannedFolder => {
+    const base = item(path, size, verdict)
+    return { ...base, metadata: { ...base.metadata, newestFileAt: NOW.toISOString(), modifiedAt: NOW.toISOString() } }
+  }
+
+  it('says how much of the reclaimable space has been idle for a year', () => {
+    const r = flattenLedger([old('C:/a/x', 4 * GB, 'SAFE'), recent('C:/a/y', 2 * GB, 'SAFE')])
+    expect(buildReport('md', r, NOW)).toContain('4.0 GB of that is in folders nothing has touched for over a year.')
+  })
+
+  it('leaves that line out when nothing is idle', () => {
+    const r = flattenLedger([recent('C:/a/y', 2 * GB, 'SAFE')])
+    expect(buildReport('md', r, NOW)).not.toContain('nothing has touched for over a year')
+  })
+
+  it('adds an Idle line to the details of an idle folder only', () => {
+    const r = flattenLedger([old('C:/a/old', 4 * GB, 'SAFE'), recent('C:/a/new', 2 * GB, 'SAFE')])
+    const md = buildReport('md', r, NOW)
+    expect(md).toContain('- **Idle:** nothing in it has changed for 3 years')
+    expect(md.match(/- \*\*Idle:\*\*/g)).toHaveLength(1)
+  })
+
+  it('puts days idle in the last CSV column', () => {
+    const csv = buildReport('csv', flattenLedger([old('C:/a/old', GB, 'SAFE'), recent('C:/a/new', GB, 'SAFE')]), NOW)
+    const lines = csv.trimEnd().split('\r\n')
+    expect(lines[0].endsWith(',Days idle')).toBe(true)
+    const cells = lines.slice(1).map((l) => l.split(',').pop())
+    expect(cells.sort()).toEqual(['0', '1425'].sort())
+  })
+})

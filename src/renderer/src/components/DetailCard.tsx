@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { BreakdownControls } from '../hooks/useDriveScan'
 import type { ScannedFolder } from '../hooks/useScanner'
 import { formatBytes, formatCount, formatDate, formatDateTime, formatDelta } from '../lib/format'
+import { idleDays, idleLabel } from '../lib/age'
 import { deltaOf } from '../lib/history'
 import { normPath } from '../lib/tree'
 import { VERDICT_STYLE } from '../lib/verdict'
@@ -157,6 +158,7 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown,
 
   const topTypes = Object.entries(m.extensionCounts).slice(0, 8)
   const delta = deltaOf(item)
+  const idle = idleLabel(idleDays(item))
 
   return (
     <article className="flex flex-col gap-5">
@@ -249,6 +251,7 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown,
           {formatDate(m.modifiedAt)}
           <span className="text-ink-3"> · newest file {formatDate(m.newestFileAt)}</span>
         </Row>
+        {idle && <Row label="Idle">Nothing in it has changed for {idle.long}</Row>}
         {topTypes.length > 0 && (
           <Row label="File types" mono>
             <span className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-2">

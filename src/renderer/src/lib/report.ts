@@ -1,5 +1,6 @@
 import type { ReportFormat } from '@shared/types'
 import { formatBytes, formatDateTime, formatDelta } from './format'
+import { idleDays, idleLabel } from './age'
 import { changesSince, deltaOf } from './history'
 import { summarize } from './summary'
 import type { LedgerRow } from './tree'
@@ -50,7 +51,7 @@ const MAX_DETAILS = 200
 
 function buildMarkdown(rows: LedgerRow[], now: Date): string {
   const items = rows.map((r) => r.item)
-  const summary = summarize(items)
+  const summary = summarize(items, now.getTime())
   const change = changesSince(items)
   const lines: string[] = []
 
@@ -64,6 +65,9 @@ function buildMarkdown(rows: LedgerRow[], now: Date): string {
       : `None of the ${summary.count} folders is rated Safe or Rebuilds. Dirvo never deletes anything.`,
     ''
   )
+  if (summary.idleReclaimableBytes > 0) {
+    lines.push(`${formatBytes(summary.idleReclaimableBytes)} of that is in folders nothing has touched for over a year.`, '')
+  }
   if (change) {
     lines.push(`Since ${formatDateTime(change.since, now)}: **${formatDelta(change.bytes)}**${change.changed > 0 ? ` across ${change.changed} changed folder${change.changed === 1 ? '' : 's'}` : ''}.`, '')
   }
@@ -112,6 +116,8 @@ function buildMarkdown(rows: LedgerRow[], now: Date): string {
       } else {
         lines.push('- **Ruling:** Unknown. Dirvo does not recognise this folder, so treat it as important.')
       }
+      const idle = idleLabel(idleDays(row.item, now.getTime()))
+      if (idle) lines.push(`- **Idle:** nothing in it has changed for ${idle.long}`)
       const d = deltaOf(row.item)
       if (d) lines.push(`- **Change:** ${formatDelta(d.bytes)} since ${formatDateTime(d.since, now)}`)
       lines.push(`- **Scanned:** ${formatDateTime(row.item.scannedAt, now)}`, '')
@@ -155,14 +161,16 @@ const CSV_HEADER = [
   'Last changed',
   'Newest file',
   'Scanned',
-  'Change since last scan (bytes)'
+  'Change since last scan (bytes)',
+  'Days idle'
 ]
 
-function buildCsv(rows: LedgerRow[]): string {
+function buildCsv(rows: LedgerRow[], now: Date): string {
   const lines = [CSV_HEADER.map(csvCell).join(',')]
   for (const row of rows) {
     const { metadata: m, explanation: e } = row.item
     const d = deltaOf(row.item)
+    const idle = idleDays(row.item, now.getTime())
     lines.push(
       [
         m.name,
@@ -183,7 +191,8 @@ function buildCsv(rows: LedgerRow[]): string {
         m.modifiedAt ?? '',
         m.newestFileAt ?? '',
         row.item.scannedAt,
-        d ? d.bytes : ''
+        d ? d.bytes : '',
+        idle ?? ''
       ]
         .map(csvCell)
         .join(',')
@@ -194,7 +203,7 @@ function buildCsv(rows: LedgerRow[]): string {
 
 /** The report text for the given rows, in the order they are shown. */
 export function buildReport(format: ReportFormat, rows: LedgerRow[], now: Date = new Date()): string {
-  return format === 'md' ? buildMarkdown(rows, now) : buildCsv(rows)
+  return format === 'md' ? buildMarkdown(rows, now) : buildCsv(rows, now)
 }
 
 export function reportFileName(format: ReportFormat, now: Date = new Date()): string {

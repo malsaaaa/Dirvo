@@ -193,7 +193,7 @@ export default function Results({
               </button>
             </div>
           )}
-          {items.length >= 3 && <LedgerToolbar view={view} onChange={onViewChange} counts={result.counts} inputRef={searchRef} />}
+          {items.length >= 3 && <LedgerToolbar view={view} onChange={onViewChange} counts={result.counts} idleCount={result.idleCount} inputRef={searchRef} />}
           <div className="min-h-0 flex-1 overflow-y-auto">
             {result.rows.length === 0 ? (
               <div className="flex flex-col items-start gap-3 px-4 py-8">

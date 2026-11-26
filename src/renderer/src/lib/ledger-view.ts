@@ -1,4 +1,5 @@
 import type { ScannedFolder } from '@shared/types'
+import { IDLE_YEAR_DAYS, isIdle } from './age'
 import { flattenLedger, type FolderComparator, type LedgerRow } from './tree'
 
 export type SortKey = 'size-desc' | 'size-asc' | 'name' | 'untouched' | 'recent'
@@ -8,9 +9,11 @@ export interface LedgerView {
   query: string
   filter: FilterKey
   sort: SortKey
+  /** Only folders nothing has touched for a year or more. Works together with the other filters. */
+  idleOnly: boolean
 }
 
-export const DEFAULT_VIEW: LedgerView = { query: '', filter: 'ALL', sort: 'size-desc' }
+export const DEFAULT_VIEW: LedgerView = { query: '', filter: 'ALL', sort: 'size-desc', idleOnly: false }
 
 export const SORT_LABELS: Record<SortKey, string> = {
   'size-desc': 'Largest first',
@@ -95,6 +98,8 @@ export interface ViewResult {
   total: number
   /** How many folders each chip would show with the current search. */
   counts: Record<FilterKey, number>
+  /** How many of the searched folders have been idle for a year or more (what the Idle chip would show). */
+  idleCount: number
   /** A search or filter is on. The list is then flat; otherwise it is the indented tree. */
   filtering: boolean
 }
@@ -104,18 +109,21 @@ export interface ViewResult {
  * under their parent). Once you search or filter, matches are shown as a flat list, because an
  * indented tree with rows missing would be confusing; each row's path still shows where it lives.
  */
-export function applyView(items: ScannedFolder[], view: LedgerView): ViewResult {
+export function applyView(items: ScannedFolder[], view: LedgerView, now: number = Date.now()): ViewResult {
   const compare = compareFor(view.sort)
   const searched = items.filter((i) => matchesQuery(i, view.query))
 
   const counts: Record<FilterKey, number> = { ALL: searched.length, RECLAIMABLE: 0, CAUTION: 0, DONT_TOUCH: 0, UNKNOWN: 0 }
   for (const i of searched) counts[filterOf(i)]++
 
-  const filtering = view.query.trim() !== '' || view.filter !== 'ALL'
+  const idleCount = searched.filter((i) => isIdle(i, IDLE_YEAR_DAYS, now)).length
+
+  const filtering = view.query.trim() !== '' || view.filter !== 'ALL' || view.idleOnly
   if (!filtering) {
-    return { rows: flattenLedger(items, compare), matched: items.length, total: items.length, counts, filtering }
+    return { rows: flattenLedger(items, compare), matched: items.length, total: items.length, counts, idleCount, filtering }
   }
 
-  const shown = (view.filter === 'ALL' ? searched : searched.filter((i) => filterOf(i) === view.filter)).sort(compare)
-  return { rows: shown.map((item) => ({ item, depth: 0 })), matched: shown.length, total: items.length, counts, filtering }
+  const byRuling = view.filter === 'ALL' ? searched : searched.filter((i) => filterOf(i) === view.filter)
+  const shown = (view.idleOnly ? byRuling.filter((i) => isIdle(i, IDLE_YEAR_DAYS, now)) : byRuling).sort(compare)
+  return { rows: shown.map((item) => ({ item, depth: 0 })), matched: shown.length, total: items.length, counts, idleCount, filtering }
 }

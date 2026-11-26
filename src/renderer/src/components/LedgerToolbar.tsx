@@ -8,12 +8,14 @@ interface Props {
   onChange: (view: LedgerView) => void
   /** How many folders each chip would show with the current search. */
   counts: Record<FilterKey, number>
+  /** Folders idle for a year or more, among the searched ones. */
+  idleCount: number
   /** Lets the app focus the search box (the / shortcut). */
   inputRef?: React.Ref<HTMLInputElement>
 }
 
 /** Search, filter chips and sort for the results ledger. */
-export default function LedgerToolbar({ view, onChange, counts, inputRef }: Props): React.JSX.Element {
+export default function LedgerToolbar({ view, onChange, counts, idleCount, inputRef }: Props): React.JSX.Element {
   return (
     <div className="flex flex-col gap-3 px-4 pb-3">
       <div className="flex gap-2">
@@ -63,7 +65,7 @@ export default function LedgerToolbar({ view, onChange, counts, inputRef }: Prop
         </select>
       </div>
 
-      <div role="group" aria-label="Filter by ruling" className="flex flex-wrap gap-1.5">
+      <div role="group" aria-label="Filter by ruling" className="flex flex-wrap gap-1">
         {FILTER_ORDER.map((k) => {
           const on = view.filter === k
           return (
@@ -72,7 +74,7 @@ export default function LedgerToolbar({ view, onChange, counts, inputRef }: Prop
               type="button"
               aria-pressed={on}
               onClick={() => onChange({ ...view, filter: k })}
-              className={`inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors duration-150 ease-out-soft ${
+              className={`inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors duration-150 ease-out-soft ${
                 on ? 'border-line-strong bg-raised text-ink' : 'border-transparent text-ink-2 hover:bg-hover hover:text-ink'
               }`}
             >
@@ -81,6 +83,18 @@ export default function LedgerToolbar({ view, onChange, counts, inputRef }: Prop
             </button>
           )
         })}
+        <button
+          type="button"
+          aria-pressed={view.idleOnly}
+          onClick={() => onChange({ ...view, idleOnly: !view.idleOnly })}
+          title="Folders where nothing has changed for a year or more"
+          className={`ml-auto inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors duration-150 ease-out-soft ${
+            view.idleOnly ? 'border-line-strong bg-raised text-ink' : 'border-transparent text-ink-2 hover:bg-hover hover:text-ink'
+          }`}
+        >
+          Idle 1y+
+          <span className="font-mono tabular-nums text-ink-3">{formatCount(idleCount)}</span>
+        </button>
       </div>
     </div>
   )

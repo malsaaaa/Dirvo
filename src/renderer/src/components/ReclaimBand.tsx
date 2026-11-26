@@ -33,7 +33,7 @@ interface BandProps {
  * scanned space sits, split by verdict. Also shows when it was scanned and what changed since before.
  */
 export default function ReclaimBand({ summary, note, change, span }: BandProps): React.JSX.Element {
-  const { reclaimableBytes, reclaimableCount, totalBytes, byBucket, count } = summary
+  const { reclaimableBytes, reclaimableCount, totalBytes, byBucket, count, idleReclaimableBytes } = summary
   const parts = BUCKET_ORDER.filter((b) => byBucket[b].bytes > 0)
   const label = parts.map((b) => `${BUCKET_LABEL[b]} ${formatBytes(byBucket[b].bytes)}`).join(', ')
 
@@ -50,6 +50,12 @@ export default function ReclaimBand({ summary, note, change, span }: BandProps):
           : `None of the ${formatCount(count)} folders is rated Safe or Rebuilds. `}
         {note}
       </p>
+      {idleReclaimableBytes > 0 && (
+        <p className="mt-1 text-sm text-ink-2">
+          <span className="font-mono tabular-nums">{formatBytes(idleReclaimableBytes)}</span> of it is in folders nothing has touched for over a
+          year.
+        </p>
+      )}
       {span && (
         <p className="mt-1 text-sm text-ink-3">
           {Date.parse(span.last) - Date.parse(span.first) > 24 * 60 * 60 * 1000

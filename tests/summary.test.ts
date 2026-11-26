@@ -135,3 +135,40 @@ describe('buildForest / flattenLedger', () => {
     expect(flattenLedger([])).toEqual([])
   })
 })
+
+describe('idle reclaimable space', () => {
+  const NOW = Date.parse('2026-11-26T12:00:00.000Z')
+  const withNewest = (path: string, size: number, verdict: Verdict | null, newest: string | null): ScannedFolder => {
+    const base = item(path, size, verdict)
+    return { ...base, metadata: { ...base.metadata, newestFileAt: newest, modifiedAt: newest } }
+  }
+  const OLD = '2024-01-01T00:00:00.000Z'
+  const RECENT = '2026-11-01T00:00:00.000Z'
+
+  it('counts only reclaimable folders that nothing has touched for a year', () => {
+    const s = summarize(
+      [
+        withNewest('C:/a/oldsafe', 5 * GB, 'SAFE', OLD),
+        withNewest('C:/a/oldrebuild', 3 * GB, 'REBUILDS_AUTOMATICALLY', OLD),
+        withNewest('C:/a/recent', 8 * GB, 'SAFE', RECENT),
+        withNewest('C:/a/oldcareful', 20 * GB, 'CAUTION', OLD),
+        withNewest('C:/a/oldunknown', 7 * GB, null, OLD)
+      ],
+      NOW
+    )
+    expect(s.reclaimableBytes).toBe(16 * GB)
+    expect(s.idleReclaimableBytes).toBe(8 * GB) // oldsafe + oldrebuild, nothing else
+  })
+
+  it('is zero with no dates, and never exceeds the reclaimable total', () => {
+    const none = summarize([withNewest('C:/a/x', 5 * GB, 'SAFE', null)], NOW)
+    expect(none.idleReclaimableBytes).toBe(0)
+    const all = summarize([withNewest('C:/a/x', 5 * GB, 'SAFE', OLD), withNewest('C:/a/y', 2 * GB, 'SAFE', OLD)], NOW)
+    expect(all.idleReclaimableBytes).toBe(all.reclaimableBytes)
+  })
+
+  it('does not count space twice when a folder contains another result', () => {
+    const s = summarize([withNewest('C:/a/p', 10 * GB, 'SAFE', OLD), withNewest('C:/a/p/c', 4 * GB, 'SAFE', OLD)], NOW)
+    expect(s.idleReclaimableBytes).toBe(10 * GB)
+  })
+})

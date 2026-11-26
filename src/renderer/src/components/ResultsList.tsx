@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { ArrowDown, ArrowUp, CornerDownRight } from 'lucide-react'
 import { formatBytes, formatDelta, shortenPath } from '../lib/format'
+import { idleDays, idleLabel } from '../lib/age'
 import { deltaOf } from '../lib/history'
 import type { LedgerRow } from '../lib/tree'
 import VerdictBadge from './VerdictBadge'
@@ -43,6 +44,7 @@ export default function ResultsList({ rows, maxBytes, selectedPath, onSelect, la
       {rows.map(({ item, depth }) => {
         const { metadata: m, explanation: e } = item
         const delta = deltaOf(item)
+        const idle = idleLabel(idleDays(item))
         const selected = m.path === selectedPath
         return (
           <button
@@ -86,6 +88,11 @@ export default function ResultsList({ rows, maxBytes, selectedPath, onSelect, la
             </span>
             <span role="cell" className="relative">
               <VerdictBadge verdict={e?.verdict ?? null} short />
+              {idle && (
+                <span className="mt-0.5 block font-mono text-xs text-ink-3" title={`Nothing in it has changed for ${idle.long}`}>
+                  idle {idle.short}
+                </span>
+              )}
             </span>
           </button>
         )

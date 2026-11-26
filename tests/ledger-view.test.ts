@@ -159,3 +159,38 @@ describe('applyView', () => {
     expect(applyView([], DEFAULT_VIEW)).toMatchObject({ rows: [], matched: 0, total: 0, filtering: false })
   })
 })
+
+describe('idle filter', () => {
+  const NOW = Date.parse('2026-11-26T12:00:00.000Z')
+  // sample ages: Temp 6 days, npm-cache about 11 months, .gradle about 18 months, WinSxS 1 day, Mystery unknown
+  const idleNames = (v: Partial<LedgerView>): string[] => applyView(sample, view(v), NOW).rows.map((r) => r.item.metadata.name)
+
+  it('shows only folders untouched for a year or more', () => {
+    expect(idleNames({ idleOnly: true })).toEqual(['.gradle'])
+  })
+
+  it('counts them for the chip, whatever else is filtered', () => {
+    expect(applyView(sample, DEFAULT_VIEW, NOW).idleCount).toBe(1)
+    expect(applyView(sample, view({ filter: 'RECLAIMABLE' }), NOW).idleCount).toBe(1)
+    expect(applyView(sample, view({ query: 'temp' }), NOW).idleCount).toBe(0)
+  })
+
+  it('combines with the ruling filter and the search', () => {
+    expect(idleNames({ idleOnly: true, filter: 'CAUTION' })).toEqual(['.gradle'])
+    expect(idleNames({ idleOnly: true, filter: 'RECLAIMABLE' })).toEqual([])
+    expect(idleNames({ idleOnly: true, query: 'gradle' })).toEqual(['.gradle'])
+    expect(idleNames({ idleOnly: true, query: 'windows' })).toEqual([])
+  })
+
+  it('counts as filtering, so the list is flat', () => {
+    const r = applyView(sample, view({ idleOnly: true }), NOW)
+    expect(r.filtering).toBe(true)
+    expect(r.rows.every((x) => x.depth === 0)).toBe(true)
+    expect(r.matched).toBe(1)
+    expect(r.total).toBe(5)
+  })
+
+  it('never treats a folder with no known date as idle', () => {
+    expect(idleNames({ idleOnly: true })).not.toContain('Mystery')
+  })
+})

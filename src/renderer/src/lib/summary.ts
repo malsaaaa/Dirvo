@@ -1,4 +1,5 @@
 import type { ScannedFolder } from '@shared/types'
+import { IDLE_YEAR_DAYS, isIdle } from './age'
 import { buildForest, type ForestNode } from './tree'
 import { BUCKET_ORDER, type Bucket } from './verdict'
 
@@ -9,6 +10,8 @@ export interface Summary {
   /** Space in folders rated Safe to delete or Rebuilds automatically. */
   reclaimableBytes: number
   reclaimableCount: number
+  /** Of the reclaimable space, how much sits in folders nothing has touched for a year or more. */
+  idleReclaimableBytes: number
   byBucket: Record<Bucket, { bytes: number; count: number }>
 }
 
@@ -18,9 +21,10 @@ export interface Summary {
  * do not already account for. Looking inside a 93 GB unknown folder and finding a 20 GB rebuildable
  * cache gives 20 GB reclaimable and 73 GB unknown, never 113 GB.
  */
-export function summarize(items: ScannedFolder[]): Summary {
+export function summarize(items: ScannedFolder[], now: number = Date.now()): Summary {
   const byBucket = Object.fromEntries(BUCKET_ORDER.map((b) => [b, { bytes: 0, count: 0 }])) as Summary['byBucket']
   let totalBytes = 0
+  let idleReclaimableBytes = 0
 
   const visit = (node: ForestNode): void => {
     const size = node.item.metadata.sizeBytes
@@ -31,6 +35,7 @@ export function summarize(items: ScannedFolder[]): Summary {
     byBucket[bucket].bytes += own
     byBucket[bucket].count++
     totalBytes += own
+    if ((bucket === 'SAFE' || bucket === 'REBUILDS_AUTOMATICALLY') && isIdle(node.item, IDLE_YEAR_DAYS, now)) idleReclaimableBytes += own
     node.children.forEach(visit)
   }
   buildForest(items).forEach(visit)
@@ -42,6 +47,7 @@ export function summarize(items: ScannedFolder[]): Summary {
     totalBytes,
     reclaimableBytes: safe.bytes + rebuilds.bytes,
     reclaimableCount: safe.count + rebuilds.count,
+    idleReclaimableBytes,
     byBucket
   }
 }
