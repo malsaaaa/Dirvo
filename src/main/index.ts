@@ -3,6 +3,7 @@ import { promises as fsp } from 'node:fs'
 import { homedir, userInfo } from 'node:os'
 import { basename, isAbsolute, join, normalize } from 'node:path'
 import { AiCache } from './ai/cache'
+import { AiSettingsStore, SettingsError } from './ai/provider-settings'
 import { EncryptionUnavailableError, KeyFormatError, KeyStore } from './ai/key-store'
 import { explainWithAi, testApiKey } from './ai/service'
 import workerPath from './scanner/worker?modulePath'
@@ -10,7 +11,16 @@ import { startScan } from './scanner/scanner'
 import { scanDrive } from './scanner/drive-scan'
 import { explainPath } from './knowledge/explain'
 import { isContainerFolder } from './knowledge/system-paths'
-import type { ActionResult, DriveScanEvent, DriveScanOutcome, FolderExplanation, KeyStatus, ScanOutcome } from '../shared/types'
+import { isProviderId, type ProviderId } from '../shared/providers'
+import type {
+  ActionResult,
+  AiConfig,
+  AiConfigInput,
+  DriveScanEvent,
+  DriveScanOutcome,
+  FolderExplanation,
+  ScanOutcome
+} from '../shared/types'
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -143,8 +153,21 @@ function registerIpc(): void {
   })
 
   // --- AI fallback and settings. The API key only ever lives in this process. ---
-  const keyStore = new KeyStore(join(app.getPath('userData'), 'anthropic-key.bin'), safeStorage)
-  const aiCache = new AiCache(join(app.getPath('userData'), 'ai-cache.json'))
+  const userData = app.getPath('userData')
+  const aiSettings = new AiSettingsStore(join(userData, 'ai-settings.json'))
+  // One encrypted key file per provider. Anthropic keeps its original file name, so keys saved by
+  // earlier versions still work.
+  const keyStores = new Map<ProviderId, KeyStore>()
+  const keyStoreFor = (id: ProviderId): KeyStore => {
+    let store = keyStores.get(id)
+    if (!store) {
+      const file = id === 'anthropic' ? 'anthropic-key.bin' : `${id}-key.bin`
+      store = new KeyStore(join(userData, file), safeStorage, id)
+      keyStores.set(id, store)
+    }
+    return store
+  }
+  const aiCache = new AiCache(join(userData, 'ai-cache.json'))
   const usernames = (): string[] => {
     const names = [process.env['USERNAME'] ?? '', basename(homedir())]
     try {
@@ -155,20 +178,36 @@ function registerIpc(): void {
     return names
   }
 
-  ipcMain.handle('ai:explain', (_e, metadata: unknown) => explainWithAi(metadata, { keyStore, cache: aiCache, usernames }))
+  const aiDeps = { settings: aiSettings, keyStoreFor, cache: aiCache, usernames }
 
-  ipcMain.handle(
-    'settings:keyStatus',
-    async (): Promise<KeyStatus> => ({
-      hasKey: await keyStore.hasKey(),
-      encryptionAvailable: keyStore.encryptionAvailable()
-    })
-  )
+  ipcMain.handle('ai:explain', (_e, metadata: unknown) => explainWithAi(metadata, aiDeps))
 
-  ipcMain.handle('settings:saveKey', async (_e, key: unknown): Promise<ActionResult> => {
-    if (typeof key !== 'string') return { ok: false, message: 'Invalid key' }
+  ipcMain.handle('settings:getConfig', async (): Promise<AiConfig> => {
+    const cfg = await aiSettings.resolve()
+    const store = keyStoreFor(cfg.provider.id)
+    return {
+      provider: cfg.provider.id,
+      model: cfg.model,
+      baseUrl: cfg.baseUrl,
+      hasKey: await store.hasKey(),
+      encryptionAvailable: store.encryptionAvailable()
+    }
+  })
+
+  ipcMain.handle('settings:setConfig', async (_e, input: unknown): Promise<ActionResult> => {
+    if (typeof input !== 'object' || input === null) return { ok: false, message: 'Invalid settings' }
     try {
-      await keyStore.save(key)
+      await aiSettings.set(input as AiConfigInput)
+      return { ok: true, message: 'Saved' }
+    } catch (err) {
+      return { ok: false, message: err instanceof SettingsError ? err.message : 'Could not save the settings.' }
+    }
+  })
+
+  ipcMain.handle('settings:saveKey', async (_e, provider: unknown, key: unknown): Promise<ActionResult> => {
+    if (!isProviderId(provider) || typeof key !== 'string') return { ok: false, message: 'Invalid key' }
+    try {
+      await keyStoreFor(provider).save(key)
       return { ok: true, message: 'API key saved and encrypted.' }
     } catch (err) {
       if (err instanceof KeyFormatError || err instanceof EncryptionUnavailableError) return { ok: false, message: err.message }
@@ -176,12 +215,13 @@ function registerIpc(): void {
     }
   })
 
-  ipcMain.handle('settings:removeKey', async (): Promise<ActionResult> => {
-    await keyStore.remove()
+  ipcMain.handle('settings:removeKey', async (_e, provider: unknown): Promise<ActionResult> => {
+    if (!isProviderId(provider)) return { ok: false, message: 'Invalid provider' }
+    await keyStoreFor(provider).remove()
     return { ok: true, message: 'API key removed.' }
   })
 
-  ipcMain.handle('settings:testKey', () => testApiKey({ keyStore }))
+  ipcMain.handle('settings:testKey', () => testApiKey(aiDeps))
 
   ipcMain.handle('scan:cancel', (_e, scanId: unknown) => {
     if (typeof scanId === 'string') activeScans.get(scanId)?.cancel()

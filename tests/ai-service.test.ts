@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { AiCache } from '../src/main/ai/cache'
 import { KeyStore, type Encryptor } from '../src/main/ai/key-store'
+import { AiSettingsStore } from '../src/main/ai/provider-settings'
+import type { ProviderId } from '../src/shared/providers'
 import { explainWithAi, testApiKey, type AiServiceDeps } from '../src/main/ai/service'
 import { meta } from './helpers'
 
@@ -36,10 +38,15 @@ beforeEach(async () => {
   dir = mkdtempSync(join(tmpdir(), 'dirvo-svc-'))
   calls = []
   respond = () => reply(answerJson())
-  const keyStore = new KeyStore(join(dir, 'k.bin'), enc)
-  await keyStore.save(KEY)
+  const stores = new Map<ProviderId, KeyStore>()
+  const keyStoreFor = (id: ProviderId): KeyStore => {
+    if (!stores.has(id)) stores.set(id, new KeyStore(join(dir, `${id}.bin`), enc, id))
+    return stores.get(id) as KeyStore
+  }
+  await keyStoreFor('anthropic').save(KEY)
   deps = {
-    keyStore,
+    settings: new AiSettingsStore(join(dir, 'settings.json')),
+    keyStoreFor,
     cache: new AiCache(join(dir, 'cache.json')),
     usernames: () => ['jdoe'],
     fetchImpl: (async (url: string, init: RequestInit) => {
@@ -103,12 +110,12 @@ describe('explainWithAi', () => {
 
   it('answers from the cache even with no key', async () => {
     await explainWithAi(meta(), deps)
-    await deps.keyStore.remove()
+    await deps.keyStoreFor('anthropic').remove()
     expect(await explainWithAi(meta(), deps)).toMatchObject({ status: 'ok', cached: true })
   })
 
   it('reports no-key and makes no request', async () => {
-    await deps.keyStore.remove()
+    await deps.keyStoreFor('anthropic').remove()
     expect(await explainWithAi(meta(), deps)).toEqual({ status: 'no-key' })
     expect(calls).toHaveLength(0)
   })
@@ -172,7 +179,7 @@ describe('testApiKey', () => {
     expect(r.message).toMatch(/rejected/i)
   })
   it('reports when no key is saved', async () => {
-    await deps.keyStore.remove()
+    await deps.keyStoreFor('anthropic').remove()
     expect((await testApiKey(deps)).ok).toBe(false)
   })
 })

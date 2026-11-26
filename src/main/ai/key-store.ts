@@ -15,10 +15,17 @@ export class EncryptionUnavailableError extends Error {
   }
 }
 
-/** Basic sanity check so typos and pasted whitespace are caught early. Not a security check. */
-export function normalizeKey(input: string): string {
+/**
+ * Basic sanity check so typos and pasted whitespace are caught early. Not a security check.
+ * Providers use many key formats, so only the obvious problems are rejected. Anthropic keys have a
+ * fixed, well-known prefix, so those are checked more strictly.
+ */
+export function normalizeKey(input: string, providerId?: string): string {
   const key = input.trim()
-  if (!/^sk-ant-[A-Za-z0-9_-]{20,}$/.test(key)) {
+  if (!/^\S{16,400}$/.test(key)) {
+    throw new KeyFormatError('That does not look like an API key. Paste it without spaces or line breaks.')
+  }
+  if (providerId === 'anthropic' && !/^sk-ant-[A-Za-z0-9_-]{20,}$/.test(key)) {
     throw new KeyFormatError('That does not look like an Anthropic API key (it should start with "sk-ant-").')
   }
   return key
@@ -29,9 +36,11 @@ export function normalizeKey(input: string): string {
  * Plain text is never written to disk. If encryption is unavailable, saving is refused.
  */
 export class KeyStore {
+  /** `providerId` only tunes the format check; each provider gets its own KeyStore and file. */
   constructor(
     private readonly filePath: string,
-    private readonly encryptor: Encryptor
+    private readonly encryptor: Encryptor,
+    private readonly providerId?: string
   ) {}
 
   encryptionAvailable(): boolean {
@@ -43,7 +52,7 @@ export class KeyStore {
   }
 
   async save(input: string): Promise<void> {
-    const key = normalizeKey(input)
+    const key = normalizeKey(input, this.providerId)
     if (!this.encryptor.isEncryptionAvailable()) throw new EncryptionUnavailableError()
     await fsp.mkdir(dirname(this.filePath), { recursive: true })
     await fsp.writeFile(this.filePath, this.encryptor.encryptString(key))

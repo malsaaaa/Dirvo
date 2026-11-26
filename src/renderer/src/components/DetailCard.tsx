@@ -40,7 +40,7 @@ function UnknownPanel({ item, onRetryAi, onOpenSettings }: Props): React.JSX.Ele
   if (item.aiStatus === 'loading') {
     return (
       <div className={`${PANEL} border-line bg-surface`} aria-live="polite">
-        <p className="font-medium">Asking Claude about this folder…</p>
+        <p className="font-medium">Asking the AI about this folder…</p>
         <p className="mt-1 text-ink-2">Only its name, size, counts and a few file names are sent. Never file contents.</p>
       </div>
     )
@@ -50,8 +50,8 @@ function UnknownPanel({ item, onRetryAi, onOpenSettings }: Props): React.JSX.Ele
       <div className={`${PANEL} border-line bg-surface`}>
         <p className="font-medium">Dirvo doesn&apos;t recognise this folder</p>
         <p className="mt-1 text-ink-2">
-          Add an Anthropic API key and Dirvo can ask Claude to explain it. Until then, treat it as important and check
-          the file names below for clues.
+          Add an API key for an AI provider in Settings and Dirvo can ask it to explain this folder. Until then, treat it
+          as important and check the file names below for clues.
         </p>
         <Button variant="primary" onClick={onOpenSettings} className="mt-4">
           Open Settings
@@ -76,7 +76,7 @@ function UnknownPanel({ item, onRetryAi, onOpenSettings }: Props): React.JSX.Ele
   return (
     <div className={`${PANEL} border-line bg-surface`}>
       <p className="font-medium">Dirvo doesn&apos;t recognise this folder</p>
-      <p className="mt-1 text-ink-2">Treat it as important until you know what created it, or ask Claude to take a look.</p>
+      <p className="mt-1 text-ink-2">Treat it as important until you know what created it, or ask the AI to take a look.</p>
       <Button variant="primary" onClick={onRetryAi} className="mt-4">
         Explain with AI
       </Button>

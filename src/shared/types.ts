@@ -1,3 +1,5 @@
+import type { ProviderId } from './providers'
+
 export type Verdict = 'SAFE' | 'REBUILDS_AUTOMATICALLY' | 'CAUTION' | 'DONT_TOUCH'
 
 export type Confidence = 'LOW' | 'MEDIUM' | 'HIGH'
@@ -22,7 +24,17 @@ export type AiExplainResult =
   | { status: 'no-key' }
   | { status: 'error'; message: string }
 
-export interface KeyStatus {
+/** What the user picked in Settings. */
+export interface AiConfigInput {
+  provider: ProviderId
+  model: string
+  /** Only used by providers whose address can be changed (Ollama, custom). */
+  baseUrl: string
+}
+
+/** The current AI setup, as shown in Settings. Never includes the key itself. */
+export interface AiConfig extends AiConfigInput {
+  /** A key is saved for the selected provider. */
   hasKey: boolean
   /** False if Windows cannot encrypt secrets for this user. Dirvo then refuses to store a key. */
   encryptionAvailable: boolean
@@ -112,10 +124,14 @@ export interface DirvoApi {
   explainFolder: (path: string) => Promise<FolderExplanation | null>
   /** Asks the AI about a folder Dirvo does not know. Only sanitised metadata leaves the PC. */
   aiExplain: (metadata: FolderMetadata) => Promise<AiExplainResult>
-  getKeyStatus: () => Promise<KeyStatus>
-  /** The key goes to the main process and is stored encrypted. It is never sent back. */
-  saveApiKey: (key: string) => Promise<ActionResult>
-  removeApiKey: () => Promise<ActionResult>
+  /** The selected AI provider, model and address, plus whether a key is saved for it. */
+  getAiConfig: () => Promise<AiConfig>
+  /** Saves the provider, model and (for local servers) address. */
+  setAiConfig: (input: AiConfigInput) => Promise<ActionResult>
+  /** The key goes to the main process and is stored encrypted, one per provider. It is never sent back. */
+  saveApiKey: (provider: ProviderId, key: string) => Promise<ActionResult>
+  removeApiKey: (provider: ProviderId) => Promise<ActionResult>
+  /** Sends a tiny test request to the selected provider. */
   testApiKey: () => Promise<ActionResult>
   /**
    * Scans a whole drive (e.g. "C:\\"): splits it into folders, scans each, and streams results via

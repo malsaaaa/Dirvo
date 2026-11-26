@@ -91,8 +91,8 @@ export default function App(): React.JSX.Element {
     void driveScanner.start(drive)
   }
 
-  // After a key is saved, explain any folders that were waiting for one.
-  const onKeyChanged = useCallback(() => {
+  // After the provider or a key changes, retry folders that were waiting or failed.
+  const onAiChanged = useCallback(() => {
     for (const i of itemsRef.current) {
       if (i.aiStatus === 'no-key' || i.aiStatus === 'error') void runAi(i.metadata.path)
     }
@@ -171,7 +171,7 @@ export default function App(): React.JSX.Element {
             }
           />
         )}
-        {screen === 'settings' && <Settings onKeyChanged={onKeyChanged} />}
+        {screen === 'settings' && <Settings onAiChanged={onAiChanged} />}
       </main>
     </div>
   )

@@ -10,9 +10,14 @@ interface CacheEntry {
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-/** Cache key: the redacted path (so it is identical across Windows accounts) plus the prompt version. */
-export function cacheKey(redactedPath: string, promptVersion: number): string {
-  return createHash('sha256').update(`v${promptVersion}|${redactedPath.toLowerCase()}`).digest('hex')
+/**
+ * Cache key: the redacted path (so it is identical across Windows accounts), the prompt version, and
+ * which provider and model answered (so switching models asks again instead of reusing old answers).
+ */
+export function cacheKey(redactedPath: string, promptVersion: number, providerAndModel = ''): string {
+  return createHash('sha256')
+    .update(`v${promptVersion}|${providerAndModel.toLowerCase()}|${redactedPath.toLowerCase()}`)
+    .digest('hex')
 }
 
 /**
