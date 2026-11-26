@@ -1,5 +1,20 @@
 export type Verdict = 'SAFE' | 'REBUILDS_AUTOMATICALLY' | 'CAUTION' | 'DONT_TOUCH'
 
+export type Confidence = 'LOW' | 'MEDIUM' | 'HIGH'
+export type ExplanationSource = 'system' | 'database' | 'ai'
+
+/** What Dirvo tells the user about a folder. Advice only: Dirvo never deletes anything. */
+export interface FolderExplanation {
+  whatItIs: string
+  createdBy: string
+  verdict: Verdict
+  confidence: Confidence
+  consequenceIfDeleted: string
+  source: ExplanationSource
+  /** Id of the system rule or database entry that matched, when there is one. */
+  matchedId?: string
+}
+
 /** Metadata about a folder. Collected without ever reading file contents. */
 export interface FolderMetadata {
   path: string
@@ -41,6 +56,8 @@ export interface DirvoApi {
   /** scanId is chosen by the caller so it can cancel before the promise settles. */
   scanFolder: (scanId: string, path: string) => Promise<ScanOutcome>
   cancelScan: (scanId: string) => Promise<void>
+  /** Offline lookup: system rules, then the known-folder database. Null means unknown. */
+  explainFolder: (path: string) => Promise<FolderExplanation | null>
   /** Returns an unsubscribe function. */
   onScanProgress: (cb: (scanId: string, progress: ScanProgress) => void) => () => void
 }

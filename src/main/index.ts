@@ -2,7 +2,8 @@ import { app, BrowserWindow, clipboard, ipcMain, shell } from 'electron'
 import { isAbsolute, join } from 'node:path'
 import workerPath from './scanner/worker?modulePath'
 import { startScan, type ScanHandle } from './scanner/scanner'
-import type { ScanOutcome } from '../shared/types'
+import { explainPath } from './knowledge/explain'
+import type { FolderExplanation, ScanOutcome } from '../shared/types'
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -60,7 +61,12 @@ function registerIpc(): void {
     }
   })
 
-  ipcMain.handle('scan:cancel', (_e, scanId: unknown) => {
+  ipcMain.handle('folder:explain', (_e, path: unknown): FolderExplanation | null => {
+    if (typeof path !== 'string' || !isAbsolute(path)) throw new Error('Invalid path')
+    return explainPath(path)
+  })
+
+  ipcMain.handle('scan:cancel',(_e, scanId: unknown) => {
     if (typeof scanId === 'string') activeScans.get(scanId)?.cancel()
   })
 

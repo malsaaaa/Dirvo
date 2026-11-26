@@ -1,0 +1,928 @@
+[
+  {
+    "id": "node-modules",
+    "patterns": [
+      "node_modules"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Downloaded JavaScript packages that a project depends on.",
+    "createdBy": "npm, Yarn or pnpm",
+    "verdict": "SAFE",
+    "consequenceIfDeleted": "The project will not run until you reinstall them with \"npm install\" (or yarn/pnpm). Nothing of yours is lost."
+  },
+  {
+    "id": "git-folder",
+    "patterns": [
+      ".git"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Git's internal database for a project: its full history, branches and any commits not yet pushed.",
+    "createdBy": "Git",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "The project loses all version history. Unpushed work cannot be recovered."
+  },
+  {
+    "id": "npm-cache",
+    "patterns": [
+      "~/AppData/Local/npm-cache",
+      "~/AppData/Roaming/npm-cache",
+      "~/.npm/_cacache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "npm's download cache of packages you have installed before.",
+    "createdBy": "npm",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "npm re-downloads packages when needed, so the next installs are slower."
+  },
+  {
+    "id": "npm-global",
+    "patterns": [
+      "~/AppData/Roaming/npm"
+    ],
+    "whatItIs": "Command-line tools and packages installed globally with \"npm install -g\".",
+    "createdBy": "npm",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Those global commands stop working until you reinstall them."
+  },
+  {
+    "id": "yarn-cache",
+    "patterns": [
+      "~/AppData/Local/Yarn/Cache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Yarn's download cache of packages.",
+    "createdBy": "Yarn",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Yarn re-downloads packages when needed."
+  },
+  {
+    "id": "pnpm-store",
+    "patterns": [
+      "~/AppData/Local/pnpm/store",
+      "~/AppData/Local/pnpm-store"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "pnpm's shared package store.",
+    "createdBy": "pnpm",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "pnpm re-downloads packages on the next install. Existing projects keep working."
+  },
+  {
+    "id": "gradle-caches",
+    "patterns": [
+      "~/.gradle/caches"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Gradle's cache of downloaded libraries and build data.",
+    "createdBy": "Gradle",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "The next build re-downloads everything it needs, which can take a while and needs internet."
+  },
+  {
+    "id": "gradle-wrapper",
+    "patterns": [
+      "~/.gradle/wrapper"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Downloaded Gradle versions used by projects through gradlew.",
+    "createdBy": "Gradle wrapper",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Each project re-downloads its Gradle version the next time you build it."
+  },
+  {
+    "id": "gradle-home",
+    "patterns": [
+      "~/.gradle"
+    ],
+    "whatItIs": "Gradle's user folder. Besides caches it can hold your gradle.properties, init scripts and signing settings.",
+    "createdBy": "Gradle",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Caches rebuild, but personal settings in gradle.properties or init scripts would be lost.",
+    "includeDescendants": true
+  },
+  {
+    "id": "gradle-project",
+    "patterns": [
+      ".gradle"
+    ],
+    "confidence": "MEDIUM",
+    "whatItIs": "Per-project Gradle state and caches. If this is in your user folder, it is the global Gradle home instead.",
+    "createdBy": "Gradle",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Gradle recreates it on the next build, which may be slower once."
+  },
+  {
+    "id": "maven-repository",
+    "patterns": [
+      "~/.m2/repository"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Maven's local repository of downloaded libraries.",
+    "createdBy": "Maven",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Maven re-downloads libraries on the next build. Locally installed (mvn install) artifacts are lost."
+  },
+  {
+    "id": "maven-home",
+    "patterns": [
+      "~/.m2"
+    ],
+    "whatItIs": "Maven's user folder. May contain settings.xml with repository credentials and mirrors.",
+    "createdBy": "Maven",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "The repository re-downloads, but settings.xml (credentials, mirrors) would be lost.",
+    "includeDescendants": true
+  },
+  {
+    "id": "nuget-packages",
+    "patterns": [
+      "~/.nuget/packages"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Downloaded NuGet packages for .NET projects.",
+    "createdBy": "NuGet / .NET",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "They are restored on the next build, which needs internet."
+  },
+  {
+    "id": "nuget-http-cache",
+    "patterns": [
+      "~/AppData/Local/NuGet/v3-cache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "NuGet's cache of web responses.",
+    "createdBy": "NuGet",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "NuGet refreshes it as needed."
+  },
+  {
+    "id": "pip-cache",
+    "patterns": [
+      "~/AppData/Local/pip/Cache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "pip's cache of downloaded packages.",
+    "createdBy": "pip (Python)",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "pip re-downloads packages when needed."
+  },
+  {
+    "id": "pycache",
+    "patterns": [
+      "__pycache__"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Compiled Python bytecode that speeds up imports.",
+    "createdBy": "Python",
+    "verdict": "SAFE",
+    "consequenceIfDeleted": "Python regenerates it automatically the next time the code runs."
+  },
+  {
+    "id": "python-venv",
+    "patterns": [
+      ".venv",
+      "venv"
+    ],
+    "confidence": "MEDIUM",
+    "whatItIs": "A project's isolated Python environment with its installed packages.",
+    "createdBy": "Python venv / virtualenv",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "The project will not run until you recreate the environment and reinstall packages. Scripts that rely on exact installed versions may break."
+  },
+  {
+    "id": "cargo-registry",
+    "patterns": [
+      "~/.cargo/registry"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Downloaded Rust crates and the crates.io index.",
+    "createdBy": "Cargo (Rust)",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Cargo re-downloads crates on the next build."
+  },
+  {
+    "id": "cargo-home",
+    "patterns": [
+      "~/.cargo"
+    ],
+    "whatItIs": "Cargo's home. Also holds tools installed with \"cargo install\" and your config.",
+    "createdBy": "Cargo (Rust)",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Installed Rust command-line tools and cargo config would be lost.",
+    "includeDescendants": true
+  },
+  {
+    "id": "rustup-home",
+    "patterns": [
+      "~/.rustup"
+    ],
+    "whatItIs": "Installed Rust toolchains.",
+    "createdBy": "rustup (Rust)",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Rust stops working until you reinstall toolchains with rustup.",
+    "includeDescendants": true
+  },
+  {
+    "id": "go-mod-cache",
+    "patterns": [
+      "~/go/pkg/mod"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Downloaded Go modules.",
+    "createdBy": "Go",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Go re-downloads modules on the next build."
+  },
+  {
+    "id": "go-build-cache",
+    "patterns": [
+      "~/AppData/Local/go-build"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Go's build cache.",
+    "createdBy": "Go",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "The next build is slower while the cache refills."
+  },
+  {
+    "id": "vscode-extensions",
+    "patterns": [
+      "~/.vscode/extensions"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Installed VS Code extensions.",
+    "createdBy": "Visual Studio Code",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "All extensions disappear. You would need to reinstall them (Settings Sync can restore them)."
+  },
+  {
+    "id": "vscode-cache",
+    "patterns": [
+      "~/AppData/Roaming/Code/Cache",
+      "~/AppData/Roaming/Code/CachedData",
+      "~/AppData/Roaming/Code/Code Cache",
+      "~/AppData/Roaming/Code/GPUCache",
+      "~/AppData/Roaming/Code/CachedExtensionVSIXs"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Temporary caches used by VS Code.",
+    "createdBy": "Visual Studio Code",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "VS Code recreates them. The next start may be a little slower."
+  },
+  {
+    "id": "vscode-user",
+    "patterns": [
+      "~/AppData/Roaming/Code/User"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Your VS Code settings, keybindings, snippets and workspace state.",
+    "createdBy": "Visual Studio Code",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "You lose your personal VS Code configuration."
+  },
+  {
+    "id": "visual-studio-vs",
+    "patterns": [
+      ".vs"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Per-solution cache and local settings (such as breakpoints and window layout).",
+    "createdBy": "Visual Studio",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Visual Studio recreates it. You may lose breakpoints and the open-tabs layout."
+  },
+  {
+    "id": "jetbrains-caches",
+    "patterns": [
+      "~/AppData/Local/JetBrains/*/caches",
+      "~/AppData/Local/JetBrains/*/log"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Index caches and logs of a JetBrains IDE.",
+    "createdBy": "JetBrains IDE",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "The IDE rebuilds its indexes on the next start, which can take several minutes."
+  },
+  {
+    "id": "huggingface-cache",
+    "patterns": [
+      "~/.cache/huggingface"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Downloaded AI models and datasets.",
+    "createdBy": "Hugging Face libraries",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "They are downloaded again when needed. Models can be many gigabytes."
+  },
+  {
+    "id": "torch-cache",
+    "patterns": [
+      "~/.cache/torch"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Downloaded pretrained model weights.",
+    "createdBy": "PyTorch",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "PyTorch downloads them again when needed."
+  },
+  {
+    "id": "ollama-models",
+    "patterns": [
+      "~/.ollama"
+    ],
+    "whatItIs": "Ollama configuration and downloaded language models.",
+    "createdBy": "Ollama",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Models must be pulled again, which can be many gigabytes each.",
+    "includeDescendants": true
+  },
+  {
+    "id": "conda-pkgs",
+    "patterns": [
+      "~/anaconda3/pkgs",
+      "~/miniconda3/pkgs"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Conda's cache of downloaded package files.",
+    "createdBy": "Conda",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Conda re-downloads packages when it needs them. Existing environments keep working."
+  },
+  {
+    "id": "android-sdk",
+    "patterns": [
+      "~/AppData/Local/Android/Sdk"
+    ],
+    "whatItIs": "The Android SDK: platforms, build tools and emulator images.",
+    "createdBy": "Android Studio",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Android projects will not build until you re-download the SDK components.",
+    "includeDescendants": true
+  },
+  {
+    "id": "android-avd",
+    "patterns": [
+      "~/.android/avd"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Android emulator virtual devices and their data.",
+    "createdBy": "Android Studio",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "The virtual devices and anything stored inside them are deleted."
+  },
+  {
+    "id": "docker-wsl-data",
+    "patterns": [
+      "~/AppData/Local/Docker/wsl"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "The virtual disk holding all your Docker images, containers and volumes.",
+    "createdBy": "Docker Desktop",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "All images, containers and volumes (including databases stored in them) are permanently lost."
+  },
+  {
+    "id": "docker-local",
+    "patterns": [
+      "~/AppData/Local/Docker"
+    ],
+    "whatItIs": "Docker Desktop's local data. May include the virtual disk with your images and volumes.",
+    "createdBy": "Docker Desktop",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Images, containers and volumes may be lost. Use Docker Desktop (Troubleshoot or \"docker system prune\") to clean up instead.",
+    "includeDescendants": true
+  },
+  {
+    "id": "docker-roaming",
+    "patterns": [
+      "~/AppData/Roaming/Docker"
+    ],
+    "whatItIs": "Docker Desktop's settings.",
+    "createdBy": "Docker Desktop",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Docker Desktop resets to default settings.",
+    "includeDescendants": true
+  },
+  {
+    "id": "docker-programdata",
+    "patterns": [
+      "<drive>/ProgramData/DockerDesktop"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Docker Desktop's system-wide data, which may include virtual disks.",
+    "createdBy": "Docker Desktop",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Images, containers and volumes may be lost. Clean up from inside Docker Desktop instead."
+  },
+  {
+    "id": "docker-config",
+    "patterns": [
+      "~/.docker"
+    ],
+    "whatItIs": "Docker command-line configuration, including saved registry logins.",
+    "createdBy": "Docker CLI",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "You are logged out of registries and lose CLI config.",
+    "includeDescendants": true
+  },
+  {
+    "id": "chrome-cache",
+    "patterns": [
+      "~/AppData/Local/Google/Chrome/User Data/*/Cache",
+      "~/AppData/Local/Google/Chrome/User Data/*/Code Cache",
+      "~/AppData/Local/Google/Chrome/User Data/*/GPUCache",
+      "~/AppData/Local/Google/Chrome/User Data/*/Service Worker/CacheStorage",
+      "~/AppData/Local/Google/Chrome/User Data/ShaderCache",
+      "~/AppData/Local/Google/Chrome/User Data/GrShaderCache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Temporary web cache of Google Chrome (pages, images, scripts).",
+    "createdBy": "Google Chrome",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Google Chrome refills it as you browse. Pages load slower at first. Bookmarks, passwords and history are not stored here."
+  },
+  {
+    "id": "chrome-profile",
+    "patterns": [
+      "~/AppData/Local/Google/Chrome/User Data",
+      "~/AppData/Local/Google/Chrome/User Data/*"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Your Google Chrome data: profiles with bookmarks, saved passwords, history, cookies and extensions.",
+    "createdBy": "Google Chrome",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "You lose bookmarks, saved passwords, history and logins for Google Chrome unless they are synced to an account."
+  },
+  {
+    "id": "edge-cache",
+    "patterns": [
+      "~/AppData/Local/Microsoft/Edge/User Data/*/Cache",
+      "~/AppData/Local/Microsoft/Edge/User Data/*/Code Cache",
+      "~/AppData/Local/Microsoft/Edge/User Data/*/GPUCache",
+      "~/AppData/Local/Microsoft/Edge/User Data/*/Service Worker/CacheStorage",
+      "~/AppData/Local/Microsoft/Edge/User Data/ShaderCache",
+      "~/AppData/Local/Microsoft/Edge/User Data/GrShaderCache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Temporary web cache of Microsoft Edge (pages, images, scripts).",
+    "createdBy": "Microsoft Edge",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Microsoft Edge refills it as you browse. Pages load slower at first. Bookmarks, passwords and history are not stored here."
+  },
+  {
+    "id": "edge-profile",
+    "patterns": [
+      "~/AppData/Local/Microsoft/Edge/User Data",
+      "~/AppData/Local/Microsoft/Edge/User Data/*"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Your Microsoft Edge data: profiles with bookmarks, saved passwords, history, cookies and extensions.",
+    "createdBy": "Microsoft Edge",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "You lose bookmarks, saved passwords, history and logins for Microsoft Edge unless they are synced to an account."
+  },
+  {
+    "id": "brave-cache",
+    "patterns": [
+      "~/AppData/Local/BraveSoftware/Brave-Browser/User Data/*/Cache",
+      "~/AppData/Local/BraveSoftware/Brave-Browser/User Data/*/Code Cache",
+      "~/AppData/Local/BraveSoftware/Brave-Browser/User Data/*/GPUCache",
+      "~/AppData/Local/BraveSoftware/Brave-Browser/User Data/*/Service Worker/CacheStorage",
+      "~/AppData/Local/BraveSoftware/Brave-Browser/User Data/ShaderCache",
+      "~/AppData/Local/BraveSoftware/Brave-Browser/User Data/GrShaderCache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Temporary web cache of Brave (pages, images, scripts).",
+    "createdBy": "Brave",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Brave refills it as you browse. Pages load slower at first. Bookmarks, passwords and history are not stored here."
+  },
+  {
+    "id": "brave-profile",
+    "patterns": [
+      "~/AppData/Local/BraveSoftware/Brave-Browser/User Data",
+      "~/AppData/Local/BraveSoftware/Brave-Browser/User Data/*"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Your Brave data: profiles with bookmarks, saved passwords, history, cookies and extensions.",
+    "createdBy": "Brave",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "You lose bookmarks, saved passwords, history and logins for Brave unless they are synced to an account."
+  },
+  {
+    "id": "firefox-cache",
+    "patterns": [
+      "~/AppData/Local/Mozilla/Firefox/Profiles/*/cache2",
+      "~/AppData/Local/Mozilla/Firefox/Profiles/*/startupCache",
+      "~/AppData/Local/Mozilla/Firefox/Profiles/*/jumpListCache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Temporary web cache of Firefox.",
+    "createdBy": "Mozilla Firefox",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Firefox refills it as you browse. Pages load slower at first."
+  },
+  {
+    "id": "firefox-profile",
+    "patterns": [
+      "~/AppData/Roaming/Mozilla/Firefox",
+      "~/AppData/Roaming/Mozilla/Firefox/Profiles/*"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Your Firefox profile: bookmarks, saved passwords, history and extensions.",
+    "createdBy": "Mozilla Firefox",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "You lose bookmarks, passwords, history and extensions unless they are synced to a Firefox account."
+  },
+  {
+    "id": "discord-cache",
+    "patterns": [
+      "~/AppData/Roaming/discord/Cache",
+      "~/AppData/Roaming/discord/Code Cache",
+      "~/AppData/Roaming/discord/GPUCache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Temporary cache of Discord.",
+    "createdBy": "Discord",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Discord recreates it. Images reload from the internet."
+  },
+  {
+    "id": "slack-cache",
+    "patterns": [
+      "~/AppData/Roaming/Slack/Cache",
+      "~/AppData/Roaming/Slack/Code Cache",
+      "~/AppData/Roaming/Slack/GPUCache",
+      "~/AppData/Roaming/Slack/Service Worker/CacheStorage"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Temporary cache of the Slack desktop app.",
+    "createdBy": "Slack",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Slack recreates it. It may be slow to load once."
+  },
+  {
+    "id": "spotify-storage",
+    "patterns": [
+      "~/AppData/Local/Spotify/Storage"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Spotify's cache of streamed and downloaded songs.",
+    "createdBy": "Spotify",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Cached songs stream again. Offline downloads must be re-downloaded."
+  },
+  {
+    "id": "adobe-media-cache",
+    "patterns": [
+      "~/AppData/Roaming/Adobe/Common/Media Cache Files",
+      "~/AppData/Roaming/Adobe/Common/Media Cache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Cached previews of imported audio and video.",
+    "createdBy": "Adobe Premiere / After Effects",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Adobe re-creates them when you reopen a project, which can take time."
+  },
+  {
+    "id": "steam-shadercache",
+    "patterns": [
+      "steamapps/shadercache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Compiled graphics shaders for your Steam games.",
+    "createdBy": "Steam",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Games rebuild them, which can cause stutter on the first run."
+  },
+  {
+    "id": "steam-library",
+    "patterns": [
+      "steamapps"
+    ],
+    "confidence": "MEDIUM",
+    "includeDescendants": true,
+    "whatItIs": "A Steam game library: installed games, their saves in some cases, and shader caches.",
+    "createdBy": "Steam",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Installed games are removed and some local save games may be lost. Uninstall from Steam instead."
+  },
+  {
+    "id": "office-file-cache",
+    "patterns": [
+      "~/AppData/Local/Microsoft/Office/16.0/OfficeFileCache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Office's cache of files opened from cloud locations.",
+    "createdBy": "Microsoft Office",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Office rebuilds it. Make sure documents are saved first, since unsynced edits may live here."
+  },
+  {
+    "id": "outlook-data",
+    "patterns": [
+      "~/AppData/Local/Microsoft/Outlook"
+    ],
+    "whatItIs": "Local Outlook mail data (OST/PST files and caches).",
+    "createdBy": "Microsoft Outlook",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "IMAP and Exchange mail re-syncs, but POP mail and local-only folders are lost permanently.",
+    "includeDescendants": true
+  },
+  {
+    "id": "onedrive-app-data",
+    "patterns": [
+      "~/AppData/Local/Microsoft/OneDrive"
+    ],
+    "whatItIs": "OneDrive's sync client data and logs (not your files).",
+    "createdBy": "Microsoft OneDrive",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "OneDrive may need to sign in again and re-scan your files.",
+    "includeDescendants": true
+  },
+  {
+    "id": "user-temp",
+    "patterns": [
+      "~/AppData/Local/Temp",
+      "<drive>/Windows/Temp"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Temporary files that programs leave behind.",
+    "createdBy": "Windows and installed programs",
+    "verdict": "SAFE",
+    "consequenceIfDeleted": "Files in use are skipped or locked. Programs recreate whatever they need. Close open programs first."
+  },
+  {
+    "id": "crash-dumps",
+    "patterns": [
+      "~/AppData/Local/CrashDumps"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Memory dumps saved when programs crashed.",
+    "createdBy": "Windows Error Reporting",
+    "verdict": "SAFE",
+    "consequenceIfDeleted": "Only useful for debugging crashes. Nothing breaks."
+  },
+  {
+    "id": "wer-reports",
+    "patterns": [
+      "<drive>/ProgramData/Microsoft/Windows/WER"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Queued and archived crash reports.",
+    "createdBy": "Windows Error Reporting",
+    "verdict": "SAFE",
+    "consequenceIfDeleted": "Only useful for troubleshooting. Nothing breaks."
+  },
+  {
+    "id": "ie-inetcache",
+    "patterns": [
+      "~/AppData/Local/Microsoft/Windows/INetCache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Cached web content used by Windows components.",
+    "createdBy": "Windows (Edge legacy / system web cache)",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Windows rebuilds it as needed."
+  },
+  {
+    "id": "thumbnail-cache",
+    "patterns": [
+      "~/AppData/Local/Microsoft/Windows/Explorer"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Thumbnail and icon caches.",
+    "createdBy": "Windows Explorer",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Explorer rebuilds them, so thumbnails load slowly for a while."
+  },
+  {
+    "id": "d3d-shader-cache",
+    "patterns": [
+      "~/AppData/Local/D3DSCache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Compiled graphics shaders.",
+    "createdBy": "DirectX / graphics driver",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "They are rebuilt, which can cause brief stutter in games."
+  },
+  {
+    "id": "nvidia-cache",
+    "patterns": [
+      "~/AppData/Local/NVIDIA/DXCache",
+      "~/AppData/Local/NVIDIA/GLCache",
+      "<drive>/ProgramData/NVIDIA Corporation/NV_Cache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Compiled shader caches.",
+    "createdBy": "NVIDIA driver",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "The driver rebuilds them. Games may stutter on the next run."
+  },
+  {
+    "id": "amd-cache",
+    "patterns": [
+      "~/AppData/Local/AMD/DxCache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Compiled shader caches.",
+    "createdBy": "AMD driver",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "The driver rebuilds them. Games may stutter on the next run."
+  },
+  {
+    "id": "wsl-distro",
+    "patterns": [
+      "~/AppData/Local/Packages/CanonicalGroupLimited*",
+      "~/AppData/Local/Packages/TheDebianProject*",
+      "~/AppData/Local/wsl"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "A Linux distribution for WSL, including its entire virtual disk and your files inside it.",
+    "createdBy": "Windows Subsystem for Linux",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "The whole Linux system and all files in it are permanently lost."
+  },
+  {
+    "id": "uwp-packages",
+    "patterns": [
+      "~/AppData/Local/Packages"
+    ],
+    "whatItIs": "Data for apps installed from the Microsoft Store.",
+    "createdBy": "Microsoft Store apps",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Apps lose their settings and saved data.",
+    "includeDescendants": true
+  },
+  {
+    "id": "windowsapps-links",
+    "patterns": [
+      "~/AppData/Local/Microsoft/WindowsApps"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Launchers for Store apps and app execution aliases.",
+    "createdBy": "Windows",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "Store apps and commands like \"python\" or \"winget\" may stop launching."
+  },
+  {
+    "id": "package-cache",
+    "patterns": [
+      "<drive>/ProgramData/Package Cache",
+      "~/AppData/Local/Package Cache"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Cached installers that programs use to repair, modify or uninstall themselves.",
+    "createdBy": "Windows Installer / Visual Studio and other installers",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "The affected programs may fail to repair, update or uninstall. Windows will ask for the original installer."
+  },
+  {
+    "id": "windows-update-download",
+    "patterns": [
+      "<drive>/Windows/SoftwareDistribution/Download"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Downloaded Windows update files.",
+    "createdBy": "Windows Update",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Windows Update downloads them again if needed. Stop the Windows Update service first."
+  },
+  {
+    "id": "windows-update-store",
+    "patterns": [
+      "<drive>/Windows/SoftwareDistribution"
+    ],
+    "whatItIs": "Windows Update's working folder, including its history database.",
+    "createdBy": "Windows Update",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Update history resets, and a bad delete can leave Windows Update failing until repaired."
+  },
+  {
+    "id": "windows-installer",
+    "patterns": [
+      "<drive>/Windows/Installer"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Installer packages Windows needs to repair, update or uninstall programs.",
+    "createdBy": "Windows Installer",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "Programs may become impossible to update or uninstall."
+  },
+  {
+    "id": "winsxs",
+    "patterns": [
+      "<drive>/Windows/WinSxS"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "The component store holding Windows system files and updates.",
+    "createdBy": "Windows",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "Windows can become unbootable or unable to update. Use Disk Cleanup or DISM to shrink it safely."
+  },
+  {
+    "id": "system32",
+    "patterns": [
+      "<drive>/Windows/System32",
+      "<drive>/Windows/SysWOW64"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Core Windows system files and drivers.",
+    "createdBy": "Windows",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "Windows will not work or boot."
+  },
+  {
+    "id": "windows-prefetch",
+    "patterns": [
+      "<drive>/Windows/Prefetch"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Data Windows uses to launch frequently used programs faster.",
+    "createdBy": "Windows",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Windows rebuilds it. Programs start slightly slower for a while."
+  },
+  {
+    "id": "windows-dumps",
+    "patterns": [
+      "<drive>/Windows/Minidump",
+      "<drive>/Windows/LiveKernelReports"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Crash dump files from system crashes.",
+    "createdBy": "Windows",
+    "verdict": "SAFE",
+    "consequenceIfDeleted": "Only useful for diagnosing crashes. Nothing breaks."
+  },
+  {
+    "id": "windows-old",
+    "patterns": [
+      "<drive>/Windows.old"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Your previous Windows installation, kept after an upgrade so you can roll back.",
+    "createdBy": "Windows Setup",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "You can no longer roll back to the old Windows. Remove it with Disk Cleanup (Previous Windows installations); files in it that you still need should be copied first."
+  },
+  {
+    "id": "windows-upgrade-temp",
+    "patterns": [
+      "<drive>/$Windows.~BT",
+      "<drive>/$Windows.~WS",
+      "<drive>/$WinREAgent"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Leftover files from a Windows upgrade or feature update.",
+    "createdBy": "Windows Setup",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Safe once the upgrade is complete, but remove them with Disk Cleanup, not by hand."
+  },
+  {
+    "id": "recycle-bin",
+    "patterns": [
+      "<drive>/$Recycle.Bin"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "The Recycle Bin storage for this drive.",
+    "createdBy": "Windows",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "Do not delete this folder by hand. Empty the Recycle Bin from the desktop instead."
+  },
+  {
+    "id": "system-volume-information",
+    "patterns": [
+      "<drive>/System Volume Information"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Restore points, shadow copies and indexing data.",
+    "createdBy": "Windows",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "You lose restore points and backups made by File History or System Restore."
+  },
+  {
+    "id": "recovery",
+    "patterns": [
+      "<drive>/Recovery"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Windows recovery environment and reset images.",
+    "createdBy": "Windows",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "\"Reset this PC\" and recovery options may stop working."
+  },
+  {
+    "id": "defender-data",
+    "patterns": [
+      "<drive>/ProgramData/Microsoft/Windows Defender"
+    ],
+    "includeDescendants": true,
+    "whatItIs": "Antivirus definitions, quarantine and scan history.",
+    "createdBy": "Microsoft Defender",
+    "verdict": "DONT_TOUCH",
+    "consequenceIfDeleted": "Protection can break until Defender repairs itself."
+  }
+]
