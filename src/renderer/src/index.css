@@ -1,5 +1,13 @@
 @import 'tailwindcss';
 
+@theme {
+  /* Paths, sizes and counts are the evidence in this app, so they get a real mono face.
+     These ship with Windows, so nothing is downloaded. */
+  --font-mono: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  /* One easing curve for every transition. */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @keyframes slide {
   0% {
     margin-left: -35%;
@@ -16,12 +24,20 @@ body,
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-zinc-50 text-zinc-900 antialiased;
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 button:focus-visible,
 input:focus-visible,
 summary:focus-visible {
-  @apply outline-2 outline-offset-2 outline-indigo-500;
+  @apply outline-2 outline-offset-2 outline-indigo-600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

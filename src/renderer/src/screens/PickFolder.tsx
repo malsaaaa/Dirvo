@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { FolderOpen } from 'lucide-react'
+import Button, { INPUT_CLASS } from '../components/Button'
 import ScanStatus from '../components/ScanStatus'
 import type { ScannerState } from '../hooks/useScanner'
 
@@ -23,25 +25,24 @@ export default function PickFolder({ scanner, blocked, onScan, onCancel, onDismi
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 p-10">
+    <div className="flex max-w-2xl flex-col gap-6 p-8">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Explain a folder</h1>
-        <p className="mt-1 text-slate-600">
+        <h1 className="text-3xl font-medium">Explain a folder</h1>
+        <p className="mt-2 text-zinc-600">
           Pick a mystery folder. Dirvo looks only at names, sizes and dates, never at what is inside your files, and
           tells you what it is and whether it is safe to delete.
         </p>
       </header>
 
       <button
+        type="button"
         onClick={() => void browse()}
         disabled={busy}
-        className="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white px-6 py-10 text-slate-700 transition hover:border-indigo-400 hover:bg-indigo-50/40 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-zinc-900 transition-colors duration-150 ease-out-soft hover:border-zinc-400 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <span className="text-3xl" aria-hidden>
-          📁
-        </span>
+        <FolderOpen size={24} strokeWidth={1.5} className="text-zinc-500" aria-hidden />
         <span className="text-base font-medium">Choose a folder…</span>
-        <span className="text-xs text-slate-500">Opens the Windows folder picker</span>
+        <span className="text-xs text-zinc-500">Opens the Windows folder picker</span>
       </button>
 
       <form
@@ -57,18 +58,14 @@ export default function PickFolder({ scanner, blocked, onScan, onCancel, onDismi
           placeholder="…or paste a path, e.g. C:\Users\you\AppData\Local\Temp"
           aria-label="Folder path"
           spellCheck={false}
-          className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          className={`${INPUT_CLASS} font-mono`}
         />
-        <button
-          type="submit"
-          disabled={!typedOk || busy}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40"
-        >
+        <Button type="submit" variant="primary" disabled={!typedOk || busy}>
           Explain
-        </button>
+        </Button>
       </form>
 
-      {blocked && <p className="text-sm text-slate-600">A drive scan is running. Folder scans are available when it finishes.</p>}
+      {blocked && <p className="text-sm text-zinc-600">A drive scan is running. Folder scans are available when it finishes.</p>}
 
       <ScanStatus state={scanner} onCancel={onCancel} onDismissError={onDismissError} />
     </div>

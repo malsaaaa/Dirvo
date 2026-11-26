@@ -1,3 +1,4 @@
+import Button from '../components/Button'
 import DetailCard from '../components/DetailCard'
 import ResultsList from '../components/ResultsList'
 import type { ScannedFolder } from '../hooks/useScanner'
@@ -26,12 +27,12 @@ export default function Results({
 }: Props): React.JSX.Element {
   if (items.length === 0) {
     return (
-      <div className="mx-auto flex max-w-md flex-col items-center gap-3 p-16 text-center">
-        <p className="text-lg font-medium">No results yet</p>
-        <p className="text-sm text-slate-600">Scan a folder and its explanation will show up here.</p>
-        <button onClick={onGoPick} className="mt-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">
+      <div className="flex max-w-md flex-col items-start gap-2 p-8">
+        <h1 className="text-3xl font-medium">Results</h1>
+        <p className="text-zinc-600">Scan a folder or a drive and its explanation will show up here.</p>
+        <Button variant="primary" onClick={onGoPick} className="mt-4">
           Explain a folder
-        </button>
+        </Button>
       </div>
     )
   }
@@ -42,20 +43,22 @@ export default function Results({
 
   return (
     <div className="flex h-full min-h-0">
-      <aside className="flex w-80 shrink-0 flex-col border-r border-slate-200 bg-white">
-        <div className="flex items-center justify-between px-4 py-3">
-          <h1 className="text-sm font-semibold">Results · {items.length}</h1>
-          <button onClick={onClear} className="text-xs text-slate-500 hover:text-slate-800">
+      <aside className="flex w-80 shrink-0 flex-col border-r border-zinc-200 bg-white">
+        <div className="flex h-14 items-center justify-between pl-4 pr-3">
+          <h1 className="text-sm font-medium">
+            Results <span className="font-mono tabular-nums text-zinc-500">{items.length}</span>
+          </h1>
+          <Button variant="ghost" onClick={onClear} className="h-8 text-xs">
             Clear list
-          </button>
+          </Button>
         </div>
-        {note && <p className="px-4 pb-2 text-xs text-slate-500">{note}</p>}
-        <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+        {note && <p className="px-4 pb-3 text-xs text-zinc-500">{note}</p>}
+        <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
           <ResultsList items={items} selectedPath={selected.metadata.path} onSelect={onSelect} />
         </div>
       </aside>
       <section className="min-w-0 flex-1 overflow-y-auto p-8">
-        <div className="mx-auto max-w-2xl">
+        <div className="max-w-3xl">
           <DetailCard
             key={selected.metadata.path}
             item={selected}

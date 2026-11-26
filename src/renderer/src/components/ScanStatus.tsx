@@ -1,5 +1,6 @@
 import type { ScannerState } from '../hooks/useScanner'
 import { formatBytes, formatCount, shortenPath } from '../lib/format'
+import Button from './Button'
 
 interface Props {
   state: ScannerState
@@ -13,39 +14,36 @@ export default function ScanStatus({ state, onCancel, onDismissError }: Props): 
 
   if (state.status === 'error') {
     return (
-      <div role="alert" className="flex items-start justify-between gap-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+      <div role="alert" className="flex items-start justify-between gap-4 rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-900">
         <div>
           <p className="font-medium">Could not scan that folder</p>
-          <p className="mt-0.5 text-red-800">{state.message}</p>
+          <p className="mt-1">{state.message}</p>
         </div>
-        <button onClick={onDismissError} className="shrink-0 rounded-md px-2 py-1 text-red-800 hover:bg-red-100">
+        <Button variant="ghost" onClick={onDismissError}>
           Dismiss
-        </button>
+        </Button>
       </div>
     )
   }
 
   const p = state.progress
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4" aria-live="polite">
+    <div className="rounded-xl border border-zinc-200 bg-white p-5" aria-live="polite">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm font-medium">Scanning {shortenPath(state.path, 70)}</p>
-          <p className="mt-0.5 truncate text-xs text-slate-500">
+          <p className="truncate text-sm font-medium">
+            Scanning <span className="font-mono">{shortenPath(state.path, 60)}</span>
+          </p>
+          <p className="mt-1 text-xs tabular-nums text-zinc-500">
             {p ? `${formatCount(p.filesScanned)} files · ${formatBytes(p.bytesScanned)} so far` : 'Starting…'}
           </p>
         </div>
-        <button
-          onClick={onCancel}
-          className="shrink-0 rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"
-        >
-          Cancel
-        </button>
+        <Button onClick={onCancel}>Cancel</Button>
       </div>
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
-        <div className="h-full w-1/3 animate-[slide_1.2s_ease-in-out_infinite] rounded-full bg-indigo-500" />
+      <div className="mt-4 h-1 overflow-hidden rounded-full bg-zinc-100">
+        <div className="h-full w-1/3 animate-[slide_1.2s_ease-in-out_infinite] rounded-full bg-indigo-600" />
       </div>
-      <p className="mt-2 truncate text-xs text-slate-400">{p ? shortenPath(p.currentPath, 90) : ''}</p>
+      <p className="mt-3 truncate font-mono text-xs text-zinc-500">{p ? shortenPath(p.currentPath, 90) : ''}</p>
     </div>
   )
 }

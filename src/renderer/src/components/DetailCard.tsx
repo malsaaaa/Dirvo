@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { ScannedFolder } from '../hooks/useScanner'
 import { formatBytes, formatCount, formatDate } from '../lib/format'
 import { VERDICT_STYLE } from '../lib/verdict'
-import VerdictBadge from './VerdictBadge'
+import Button from './Button'
 
 const SOURCE_LABEL = {
   system: 'System rule',
@@ -13,17 +13,17 @@ const SOURCE_LABEL = {
 function Section({ title, children }: { title: string; children: React.ReactNode }): React.JSX.Element {
   return (
     <section>
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h3>
-      <div className="mt-1 text-sm leading-relaxed text-slate-800">{children}</div>
+      <h3 className="text-sm font-medium text-zinc-500">{title}</h3>
+      <div className="mt-1 text-sm leading-relaxed text-zinc-900">{children}</div>
     </section>
   )
 }
 
-function Stat({ label, value }: { label: string; value: string }): React.JSX.Element {
+function Stat({ label, value, mono = false }: { label: string; value: string; mono?: boolean }): React.JSX.Element {
   return (
     <div>
-      <dt className="text-xs text-slate-500">{label}</dt>
-      <dd className="mt-0.5 text-sm font-medium text-slate-900">{value}</dd>
+      <dt className="text-xs text-zinc-500">{label}</dt>
+      <dd className={`mt-1 text-base font-medium tabular-nums text-zinc-900 ${mono ? 'font-mono' : ''}`}>{value}</dd>
     </div>
   )
 }
@@ -34,53 +34,52 @@ interface Props {
   onOpenSettings: () => void
 }
 
+const PANEL = 'rounded-xl border p-5 text-sm'
+
 function UnknownPanel({ item, onRetryAi, onOpenSettings }: Props): React.JSX.Element {
-  const base = 'rounded-lg border p-4 text-sm'
   if (item.aiStatus === 'loading') {
     return (
-      <div className={`${base} border-indigo-200 bg-indigo-50 text-indigo-900`} aria-live="polite">
-        <p className="font-semibold">Asking Claude about this folder…</p>
-        <p className="mt-0.5">Only its name, size, counts and a few file names are sent. Never file contents.</p>
+      <div className={`${PANEL} border-zinc-200 bg-white`} aria-live="polite">
+        <p className="font-medium">Asking Claude about this folder…</p>
+        <p className="mt-1 text-zinc-600">Only its name, size, counts and a few file names are sent. Never file contents.</p>
       </div>
     )
   }
   if (item.aiStatus === 'no-key') {
     return (
-      <div className={`${base} border-slate-200 bg-slate-50 text-slate-700`}>
-        <p className="font-semibold">Dirvo doesn&apos;t recognise this folder</p>
-        <p className="mt-0.5">
+      <div className={`${PANEL} border-zinc-200 bg-white`}>
+        <p className="font-medium">Dirvo doesn&apos;t recognise this folder</p>
+        <p className="mt-1 text-zinc-600">
           Add an Anthropic API key and Dirvo can ask Claude to explain it. Until then, treat it as important and check
           the file names below for clues.
         </p>
-        <button onClick={onOpenSettings} className="mt-3 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500">
+        <Button variant="primary" onClick={onOpenSettings} className="mt-4">
           Open Settings
-        </button>
+        </Button>
       </div>
     )
   }
   if (item.aiStatus === 'error') {
     return (
-      <div role="alert" className={`${base} border-red-200 bg-red-50 text-red-900`}>
-        <p className="font-semibold">Could not get an explanation</p>
-        <p className="mt-0.5">{item.aiError}</p>
-        <div className="mt-3 flex gap-2">
-          <button onClick={onRetryAi} className="rounded-md bg-red-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-600">
+      <div role="alert" className={`${PANEL} border-red-200 bg-red-50 text-red-900`}>
+        <p className="font-medium">Could not get an explanation</p>
+        <p className="mt-1">{item.aiError}</p>
+        <div className="mt-4 flex gap-2">
+          <Button variant="primary" onClick={onRetryAi}>
             Try again
-          </button>
-          <button onClick={onOpenSettings} className="rounded-md border border-red-300 px-3 py-1.5 text-sm hover:bg-red-100">
-            Open Settings
-          </button>
+          </Button>
+          <Button onClick={onOpenSettings}>Open Settings</Button>
         </div>
       </div>
     )
   }
   return (
-    <div className={`${base} border-slate-200 bg-slate-50 text-slate-700`}>
-      <p className="font-semibold">Dirvo doesn&apos;t recognise this folder</p>
-      <p className="mt-0.5">Treat it as important until you know what created it, or ask Claude to take a look.</p>
-      <button onClick={onRetryAi} className="mt-3 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500">
+    <div className={`${PANEL} border-zinc-200 bg-white`}>
+      <p className="font-medium">Dirvo doesn&apos;t recognise this folder</p>
+      <p className="mt-1 text-zinc-600">Treat it as important until you know what created it, or ask Claude to take a look.</p>
+      <Button variant="primary" onClick={onRetryAi} className="mt-4">
         Explain with AI
-      </button>
+      </Button>
     </div>
   )
 }
@@ -98,28 +97,25 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings }: Props): 
   const topTypes = Object.entries(m.extensionCounts).slice(0, 8)
 
   return (
-    <article className="flex flex-col gap-5">
+    <article className="flex flex-col gap-6">
       <header>
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="min-w-0 break-words text-xl font-semibold tracking-tight">{m.name}</h2>
-          <VerdictBadge verdict={e?.verdict ?? null} />
-        </div>
-        <p className="mt-1 break-all text-xs text-slate-500">{m.path}</p>
+        <h2 className="min-w-0 break-words text-xl font-medium">{m.name}</h2>
+        <p className="mt-1 break-all font-mono text-xs text-zinc-500">{m.path}</p>
       </header>
 
       {e ? (
-        <div className={`rounded-lg border p-4 ${VERDICT_STYLE[e.verdict].banner}`}>
-          <p className="text-sm font-semibold">{VERDICT_STYLE[e.verdict].label}</p>
-          <p className="mt-0.5 text-sm opacity-90">{VERDICT_STYLE[e.verdict].meaning}</p>
+        <div className={`rounded-xl border p-5 ${VERDICT_STYLE[e.verdict].banner}`}>
+          <p className="text-base font-medium">{VERDICT_STYLE[e.verdict].label}</p>
+          <p className="mt-1 text-sm">{VERDICT_STYLE[e.verdict].meaning}</p>
         </div>
       ) : (
         <UnknownPanel item={item} onRetryAi={onRetryAi} onOpenSettings={onOpenSettings} />
       )}
 
       {e && e.downgradedFrom && (
-        <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <p className="rounded-lg bg-amber-50 px-4 py-3 text-xs text-amber-900">
           The AI was not confident, so Dirvo changed its verdict from &ldquo;{VERDICT_STYLE[e.downgradedFrom].label}&rdquo; to
-          &ldquo;{VERDICT_STYLE[e.verdict].label}&rdquo;.
+          &ldquo;{VERDICT_STYLE[e.verdict].label}&rdquo;
         </p>
       )}
 
@@ -128,49 +124,49 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings }: Props): 
           <Section title="What it is">{e.whatItIs}</Section>
           <Section title="Created by">{e.createdBy}</Section>
           <Section title="If you delete it">{e.consequenceIfDeleted}</Section>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-zinc-500">
             {SOURCE_LABEL[e.source]} · {e.confidence.toLowerCase()} confidence
             {e.source === 'ai' && ' · an estimate from metadata only, so double-check before deleting'}
           </p>
         </div>
       )}
 
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-lg border border-slate-200 bg-white p-4 sm:grid-cols-3">
-        <Stat label="Size" value={formatBytes(m.sizeBytes)} />
-        <Stat label="Files" value={formatCount(m.fileCount)} />
-        <Stat label="Subfolders" value={formatCount(m.dirCount)} />
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl border border-zinc-200 bg-white p-5 sm:grid-cols-3">
+        <Stat label="Size" value={formatBytes(m.sizeBytes)} mono />
+        <Stat label="Files" value={formatCount(m.fileCount)} mono />
+        <Stat label="Subfolders" value={formatCount(m.dirCount)} mono />
         <Stat label="Created" value={formatDate(m.createdAt)} />
         <Stat label="Last changed" value={formatDate(m.modifiedAt)} />
         <Stat label="Newest file" value={formatDate(m.newestFileAt)} />
       </dl>
 
       {m.unreadableCount > 0 && (
-        <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <p className="rounded-lg bg-amber-50 px-4 py-3 text-xs text-amber-900">
           {formatCount(m.unreadableCount)} item{m.unreadableCount === 1 ? '' : 's'} could not be read (permissions), so
-          the size may be higher than shown.
+          the size may be higher than shown
         </p>
       )}
 
       {topTypes.length > 0 && (
         <Section title="Top file types">
-          <div className="flex flex-wrap gap-1.5">
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-zinc-600">
             {topTypes.map(([ext, count]) => (
-              <span key={ext} className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
-                {ext} <span className="text-slate-500">× {formatCount(count)}</span>
-              </span>
+              <li key={ext}>
+                {ext} <span className="tabular-nums text-zinc-500">× {formatCount(count)}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </Section>
       )}
 
       {m.sampleFileNames.length > 0 && (
-        <details className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
-          <summary className="cursor-pointer select-none font-medium text-slate-700">
-            Sample file names ({m.sampleFileNames.length})
+        <details className="rounded-xl border border-zinc-200 bg-white p-4 text-sm">
+          <summary className="cursor-pointer select-none font-medium text-zinc-900">
+            Sample file names <span className="font-mono text-xs tabular-nums text-zinc-500">{m.sampleFileNames.length}</span>
           </summary>
-          <ul className="mt-2 max-h-48 overflow-auto font-mono text-xs text-slate-600">
+          <ul className="mt-3 max-h-48 overflow-auto font-mono text-xs text-zinc-600">
             {m.sampleFileNames.map((n, i) => (
-              <li key={`${n}-${i}`} className="truncate">
+              <li key={`${n}-${i}`} className="truncate leading-6">
                 {n}
               </li>
             ))}
@@ -178,23 +174,13 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings }: Props): 
         </details>
       )}
 
-      <footer className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4">
-        <button
-          onClick={() => void window.dirvo.openInExplorer(m.path)}
-          className="rounded-md bg-slate-900 px-3.5 py-2 text-sm font-medium text-white hover:bg-slate-700"
-        >
-          Open in Explorer
-        </button>
-        <button
-          onClick={() => void copy()}
-          className="rounded-md border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium hover:bg-slate-50"
-        >
-          Copy path
-        </button>
-        <span className="text-xs text-emerald-700" aria-live="polite">
+      <footer className="flex flex-wrap items-center gap-2 border-t border-zinc-200 pt-6">
+        <Button onClick={() => void window.dirvo.openInExplorer(m.path)}>Open in Explorer</Button>
+        <Button onClick={() => void copy()}>Copy path</Button>
+        <span className="text-xs text-emerald-800" aria-live="polite">
           {feedback}
         </span>
-        <span className="ml-auto text-xs text-slate-400">Dirvo never deletes anything.</span>
+        <span className="ml-auto text-xs text-zinc-500">Dirvo never deletes anything</span>
       </footer>
     </article>
   )
