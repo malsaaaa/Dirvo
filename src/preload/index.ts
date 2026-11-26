@@ -10,6 +10,7 @@ const api: DirvoApi = {
   pickFolder: () => ipcRenderer.invoke('dialog:pickFolder'),
   listDrives: () => ipcRenderer.invoke('drives:list'),
   explainFolder:(path) => ipcRenderer.invoke('folder:explain', path),
+  saveReport: (request) => ipcRenderer.invoke('report:save', request),
   loadScans: () => ipcRenderer.invoke('scans:load'),
   saveScans: (saved) => ipcRenderer.invoke('scans:save', saved),
   forgetScans: () => ipcRenderer.invoke('scans:forget'),

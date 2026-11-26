@@ -4,6 +4,7 @@ import { homedir, userInfo } from 'node:os'
 import { basename, isAbsolute, join, normalize } from 'node:path'
 import { AiCache } from './ai/cache'
 import { SavedScansStore } from './storage/saved-scans'
+import { prepareContent, ReportRequestError, safeFileName, validateReportRequest, withExtension } from './storage/report-file'
 import { AiSettingsStore, SettingsError } from './ai/provider-settings'
 import { EncryptionUnavailableError, KeyFormatError, KeyStore } from './ai/key-store'
 import { explainWithAi, testApiKey } from './ai/service'
@@ -24,6 +25,7 @@ import type {
   DriveScanEvent,
   DriveScanOutcome,
   FolderExplanation,
+  ReportResult,
   ScanOutcome
 } from '../shared/types'
 
@@ -217,6 +219,30 @@ function registerIpc(): void {
   ipcMain.handle('scans:save', (_e, saved: unknown) => scansStore.save(saved))
   ipcMain.handle('scans:forget', () => scansStore.clear())
 
+  // Saving a report: the user picks the file in the Windows save dialog, so Dirvo only ever writes
+  // where they chose. The username is hidden first if they asked for that.
+  ipcMain.handle('report:save', async (e, raw: unknown): Promise<ReportResult> => {
+    try {
+      const req = validateReportRequest(raw)
+      const win = BrowserWindow.fromWebContents(e.sender)
+      const options = {
+        title: 'Save report',
+        defaultPath: join(app.getPath('documents'), safeFileName(req.suggestedName, req.format)),
+        filters:
+          req.format === 'md'
+            ? [{ name: 'Markdown report', extensions: ['md'] }]
+            : [{ name: 'CSV spreadsheet', extensions: ['csv'] }]
+      }
+      const result = win ? await dialog.showSaveDialog(win, options) : await dialog.showSaveDialog(options)
+      if (result.canceled || !result.filePath) return { status: 'cancelled' }
+      const target = withExtension(result.filePath, req.format)
+      await fsp.writeFile(target, prepareContent(req, reportUsernames()), 'utf8')
+      return { status: 'saved', path: target }
+    } catch (err) {
+      return { status: 'error', message: err instanceof ReportRequestError ? err.message : 'Could not save the report.' }
+    }
+  })
+
   const aiSettings = new AiSettingsStore(join(userData, 'ai-settings.json'))
   // One encrypted key file per provider. Anthropic keeps its original file name, so keys saved by
   // earlier versions still work.
@@ -231,6 +257,7 @@ function registerIpc(): void {
     return store
   }
   const aiCache = new AiCache(join(userData, 'ai-cache.json'))
+  const reportUsernames = (): string[] => usernames()
   const usernames = (): string[] => {
     const names = [process.env['USERNAME'] ?? '', basename(homedir())]
     try {

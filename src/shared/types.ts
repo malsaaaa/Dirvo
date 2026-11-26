@@ -139,6 +139,18 @@ export interface SavedScans {
   history: Record<string, SizeSnapshot>
 }
 
+export type ReportFormat = 'md' | 'csv'
+
+export interface ReportRequest {
+  content: string
+  format: ReportFormat
+  suggestedName: string
+  /** Replace the Windows username with <USER> before writing the file. */
+  redactUser: boolean
+}
+
+export type ReportResult = { status: 'saved'; path: string } | { status: 'cancelled' } | { status: 'error'; message: string }
+
 /** The one API the renderer may use. Implemented in preload, handled in main. */
 export interface DirvoApi {
   appVersion: () => Promise<string>
@@ -153,6 +165,8 @@ export interface DirvoApi {
   listDrives: () => Promise<DriveInfo[]>
   /** Offline lookup: system rules, then the known-folder database. Null means unknown. */
   explainFolder: (path: string) => Promise<FolderExplanation | null>
+  /** Asks where to save a report (Windows save dialog) and writes it there. */
+  saveReport: (request: ReportRequest) => Promise<ReportResult>
   /** Loads the results saved last time (offline rulings are recomputed from the current database). */
   loadScans: () => Promise<SavedScans>
   /** Saves the current results and size history on this PC. Nothing is uploaded. */
