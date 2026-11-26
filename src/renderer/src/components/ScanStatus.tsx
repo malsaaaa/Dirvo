@@ -14,7 +14,7 @@ export default function ScanStatus({ state, onCancel, onDismissError }: Props): 
 
   if (state.status === 'error') {
     return (
-      <div role="alert" className="flex items-start justify-between gap-4 rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-900">
+      <div role="alert" className="flex items-start justify-between gap-4 rounded-xl border border-bad-line bg-bad-bg p-5 text-sm text-bad-ink">
         <div>
           <p className="font-medium">Could not scan that folder</p>
           <p className="mt-1">{state.message}</p>
@@ -28,22 +28,22 @@ export default function ScanStatus({ state, onCancel, onDismissError }: Props): 
 
   const p = state.progress
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5" aria-live="polite">
+    <div className="rounded-xl border border-line bg-surface p-5" aria-live="polite">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">
             Scanning <span className="font-mono">{shortenPath(state.path, 60)}</span>
           </p>
-          <p className="mt-1 text-xs tabular-nums text-zinc-500">
+          <p className="mt-1 text-xs tabular-nums text-ink-3">
             {p ? `${formatCount(p.filesScanned)} files · ${formatBytes(p.bytesScanned)} so far` : 'Starting…'}
           </p>
         </div>
         <Button onClick={onCancel}>Cancel</Button>
       </div>
-      <div className="mt-4 h-1 overflow-hidden rounded-full bg-zinc-100">
-        <div className="h-full w-1/3 animate-[slide_1.2s_ease-in-out_infinite] rounded-full bg-indigo-600" />
+      <div className="mt-4 h-1 overflow-hidden rounded-full bg-raised">
+        <div className="h-full w-1/3 animate-[slide_1.2s_ease-in-out_infinite] rounded-full bg-accent" />
       </div>
-      <p className="mt-3 truncate font-mono text-xs text-zinc-500">{p ? shortenPath(p.currentPath, 90) : ''}</p>
+      <p className="mt-3 truncate font-mono text-xs text-ink-3">{p ? shortenPath(p.currentPath, 90) : ''}</p>
     </div>
   )
 }

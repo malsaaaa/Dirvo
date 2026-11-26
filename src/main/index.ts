@@ -19,7 +19,8 @@ function createWindow(): void {
     minWidth: 800,
     minHeight: 560,
     show: false,
-    backgroundColor: '#f8fafc',
+    // Matches the dark theme, which is the default, so there is no white flash on start.
+    backgroundColor: '#0e0e10',
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

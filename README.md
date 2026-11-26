@@ -13,6 +13,7 @@ Pick a folder, or scan a whole drive. Dirvo reads only folder metadata (names, s
 - **Colour-coded verdicts:** every folder gets one of four verdicts (see below), plus what it is, what created it, and what happens if you delete it.
 - **Offline first:** about 80 common folders (browser caches, `node_modules`, npm and Gradle caches, Windows Update, Temp, Package Cache, Docker, ...) are recognised with no network.
 - **AI for the rest:** unknown folders can be explained by Claude, using your own Anthropic API key.
+- **Dark by default:** the app opens in a dark theme. Switch to light in **Settings → Appearance**, and your choice is remembered.
 - **Cancelable, with progress:** scans run in worker threads, so the app stays responsive.
 
 ## Verdicts

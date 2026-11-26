@@ -7,10 +7,10 @@ const BASE =
 
 const VARIANT: Record<Variant, string> = {
   // The one accent in the chrome: the primary action.
-  primary: 'bg-indigo-600 text-white hover:bg-indigo-700',
-  secondary: 'border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50',
-  danger: 'border border-zinc-200 bg-white text-red-700 hover:bg-red-50',
-  ghost: 'px-3 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+  primary: 'bg-accent text-white hover:bg-accent-hover',
+  secondary: 'border border-line bg-surface text-ink hover:bg-hover',
+  danger: 'border border-line bg-surface text-bad-text hover:bg-bad-bg',
+  ghost: 'px-3 text-ink-2 hover:bg-raised hover:text-ink'
 }
 
 interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -23,5 +23,5 @@ export default function Button({ variant = 'secondary', className = '', type = '
 
 /** Shared look for text inputs: same height and radius as buttons. */
 export const INPUT_CLASS =
-  'h-9 min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none ' +
-  'transition-colors duration-150 ease-out-soft placeholder:text-zinc-400 focus:border-indigo-600'
+  'h-9 min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 text-sm outline-none ' +
+  'transition-colors duration-150 ease-out-soft placeholder:text-faint focus:border-accent'

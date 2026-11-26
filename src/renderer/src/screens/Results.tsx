@@ -29,7 +29,7 @@ export default function Results({
     return (
       <div className="flex max-w-md flex-col items-start gap-2 p-8">
         <h1 className="text-3xl font-medium">Results</h1>
-        <p className="text-zinc-600">Scan a folder or a drive and its explanation will show up here.</p>
+        <p className="text-ink-2">Scan a folder or a drive and its explanation will show up here.</p>
         <Button variant="primary" onClick={onGoPick} className="mt-4">
           Explain a folder
         </Button>
@@ -43,16 +43,16 @@ export default function Results({
 
   return (
     <div className="flex h-full min-h-0">
-      <aside className="flex w-80 shrink-0 flex-col border-r border-zinc-200 bg-white">
+      <aside className="flex w-80 shrink-0 flex-col border-r border-line bg-surface">
         <div className="flex h-14 items-center justify-between pl-4 pr-3">
           <h1 className="text-sm font-medium">
-            Results <span className="font-mono tabular-nums text-zinc-500">{items.length}</span>
+            Results <span className="font-mono tabular-nums text-ink-3">{items.length}</span>
           </h1>
           <Button variant="ghost" onClick={onClear} className="h-8 text-xs">
             Clear list
           </Button>
         </div>
-        {note && <p className="px-4 pb-3 text-xs text-zinc-500">{note}</p>}
+        {note && <p className="px-4 pb-3 text-xs text-ink-3">{note}</p>}
         <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
           <ResultsList items={items} selectedPath={selected.metadata.path} onSelect={onSelect} />
         </div>

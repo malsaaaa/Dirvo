@@ -4,7 +4,7 @@ export interface VerdictStyle {
   label: string
   /** One line explaining what the verdict means. */
   meaning: string
-  /** Full Tailwind class strings (kept literal so Tailwind can see them). */
+  /** Full Tailwind class strings (kept literal so Tailwind can see them). Colours come from theme tokens. */
   text: string
   banner: string
   dot: string
@@ -15,35 +15,35 @@ export const VERDICT_STYLE: Record<Verdict, VerdictStyle> = {
   SAFE: {
     label: 'Safe to delete',
     meaning: 'Removing it will not harm anything of yours',
-    text: 'text-emerald-800',
-    banner: 'bg-emerald-50 border-emerald-200 text-emerald-900',
-    dot: 'bg-emerald-600'
+    text: 'text-ok-text',
+    banner: 'bg-ok-bg border-ok-line text-ok-ink',
+    dot: 'bg-ok-dot'
   },
   REBUILDS_AUTOMATICALLY: {
     label: 'Rebuilds automatically',
     meaning: 'Safe to delete. The app that owns it will recreate it',
-    text: 'text-sky-800',
-    banner: 'bg-sky-50 border-sky-200 text-sky-900',
-    dot: 'bg-sky-600'
+    text: 'text-info-text',
+    banner: 'bg-info-bg border-info-line text-info-ink',
+    dot: 'bg-info-dot'
   },
   CAUTION: {
     label: 'Be careful',
     meaning: 'Deleting it may remove settings or data. Check before you do',
-    text: 'text-amber-800',
-    banner: 'bg-amber-50 border-amber-200 text-amber-900',
-    dot: 'bg-amber-600'
+    text: 'text-warn-text',
+    banner: 'bg-warn-bg border-warn-line text-warn-ink',
+    dot: 'bg-warn-dot'
   },
   DONT_TOUCH: {
     label: "Don't touch",
     meaning: 'Windows, a program or your own data depends on it',
-    text: 'text-red-800',
-    banner: 'bg-red-50 border-red-200 text-red-900',
-    dot: 'bg-red-600'
+    text: 'text-bad-text',
+    banner: 'bg-bad-bg border-bad-line text-bad-ink',
+    dot: 'bg-bad-dot'
   }
 }
 
 export const UNKNOWN_STYLE = {
   label: 'Unknown',
-  text: 'text-zinc-600',
-  dot: 'bg-zinc-400'
+  text: 'text-ink-2',
+  dot: 'bg-faint'
 }

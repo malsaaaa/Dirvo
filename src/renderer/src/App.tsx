@@ -102,10 +102,10 @@ export default function App(): React.JSX.Element {
 
   return (
     <div className="flex h-screen">
-      <nav className="flex w-60 shrink-0 flex-col gap-0.5 border-r border-zinc-200 bg-white p-4" aria-label="Main">
+      <nav className="flex w-60 shrink-0 flex-col gap-0.5 border-r border-line bg-surface p-4" aria-label="Main">
         <div className="px-3 pb-6 pt-1">
           <p className="text-lg font-medium">Dirvo</p>
-          <p className="mt-1 text-xs text-zinc-500">Mystery folders, explained</p>
+          <p className="mt-1 text-xs text-ink-3">Mystery folders, explained</p>
         </div>
         {NAV.map((n) => (
           <button
@@ -113,22 +113,22 @@ export default function App(): React.JSX.Element {
             onClick={() => setScreen(n.id)}
             aria-current={screen === n.id ? 'page' : undefined}
             className={`flex h-9 items-center justify-between rounded-lg px-3 text-left text-sm font-medium transition-colors duration-150 ease-out-soft ${
-              screen === n.id ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+              screen === n.id ? 'bg-raised text-ink' : 'text-ink-2 hover:bg-raised hover:text-ink'
             }`}
           >
             {n.label}
             {n.id === 'results' && items.length > 0 && (
-              <span className="font-mono text-xs tabular-nums text-zinc-500">{items.length}</span>
+              <span className="font-mono text-xs tabular-nums text-ink-3">{items.length}</span>
             )}
             {n.id === 'drive' && driveBusy && (
-              <span className="h-2 w-2 animate-pulse rounded-full bg-indigo-600" title="Scanning a drive" />
+              <span className="h-2 w-2 animate-pulse rounded-full bg-accent" title="Scanning a drive" />
             )}
             {n.id === 'settings' && unknownWaiting > 0 && (
-              <span className="h-2 w-2 rounded-full bg-amber-600" title="An API key is needed to explain unknown folders" />
+              <span className="h-2 w-2 rounded-full bg-warn-dot" title="An API key is needed to explain unknown folders" />
             )}
           </button>
         ))}
-        <p className="mt-auto px-3 text-xs text-zinc-500">Dirvo only advises and never deletes</p>
+        <p className="mt-auto px-3 text-xs text-ink-3">Dirvo only advises and never deletes</p>
       </nav>
 
       <main className="min-w-0 flex-1 overflow-y-auto">
