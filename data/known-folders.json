@@ -543,6 +543,7 @@
   {
     "id": "chrome-profile",
     "patterns": [
+      "~/AppData/Local/Google/Chrome",
       "~/AppData/Local/Google/Chrome/User Data",
       "~/AppData/Local/Google/Chrome/User Data/*"
     ],
@@ -574,6 +575,7 @@
   {
     "id": "edge-profile",
     "patterns": [
+      "~/AppData/Local/Microsoft/Edge",
       "~/AppData/Local/Microsoft/Edge/User Data",
       "~/AppData/Local/Microsoft/Edge/User Data/*"
     ],
@@ -605,6 +607,7 @@
   {
     "id": "brave-profile",
     "patterns": [
+      "~/AppData/Local/BraveSoftware/Brave-Browser",
       "~/AppData/Local/BraveSoftware/Brave-Browser/User Data",
       "~/AppData/Local/BraveSoftware/Brave-Browser/User Data/*"
     ],
@@ -729,6 +732,52 @@
     "createdBy": "Steam",
     "verdict": "CAUTION",
     "consequenceIfDeleted": "Installed games are removed and some local save games may be lost. Uninstall from Steam instead."
+  },
+  {
+    "id": "google-play-games",
+    "patterns": [
+      "~/AppData/Local/Google/Play Games"
+    ],
+    "confidence": "MEDIUM",
+    "includeDescendants": true,
+    "whatItIs": "The Android environment and game data of Google Play Games for PC.",
+    "createdBy": "Google Play Games for PC",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Games installed through Google Play Games are removed, and local game data that is not synced to your Google account is lost.",
+    "howToClean": {
+      "text": "Uninstall games, or the Google Play Games app, from Settings > Apps instead of deleting its folder.",
+      "settings": "apps"
+    }
+  },
+  {
+    "id": "android-studio-system",
+    "patterns": [
+      "~/AppData/Local/Google/AndroidStudio*"
+    ],
+    "confidence": "MEDIUM",
+    "includeDescendants": true,
+    "whatItIs": "Android Studio's caches, indexes and logs for one version of the IDE.",
+    "createdBy": "Android Studio",
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "consequenceIfDeleted": "Android Studio rebuilds them the next time that version starts, which can take a few minutes. Folders for versions you no longer use are not needed at all.",
+    "howToClean": {
+      "text": "In Android Studio use File > Invalidate Caches. For versions you no longer use, close Android Studio and delete the folder for that version in File Explorer."
+    }
+  },
+  {
+    "id": "google-drive-cache",
+    "patterns": [
+      "~/AppData/Local/Google/DriveFS"
+    ],
+    "confidence": "MEDIUM",
+    "includeDescendants": true,
+    "whatItIs": "The local cache and sync state of Google Drive for desktop.",
+    "createdBy": "Google Drive for desktop",
+    "verdict": "CAUTION",
+    "consequenceIfDeleted": "Files that have not finished syncing can be lost, and Drive has to download or re-index your files again.",
+    "howToClean": {
+      "text": "Do not delete this by hand. Make sure Google Drive for desktop has finished syncing first, then use its own settings to reset it or sign out and back in."
+    }
   },
   {
     "id": "office-file-cache",

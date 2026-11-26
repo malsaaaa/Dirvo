@@ -7,7 +7,7 @@ import { VERDICT_STYLE } from '../lib/verdict'
 
 interface Props {
   scanner: ScannerState
-  /** A drive scan is running, so folder scans wait. */
+  /** A drive scan or "look inside" is running, so folder scans wait. */
   blocked: boolean
   onScan: (path: string) => void
   onCancel: () => void
@@ -67,7 +67,7 @@ export default function PickFolder({ scanner, blocked, onScan, onCancel, onDismi
         </div>
       </form>
 
-      {blocked && <p className="text-sm text-ink-2">A drive scan is running. Folder scans are available when it finishes.</p>}
+      {blocked && <p className="text-sm text-ink-2">Another scan is running. Folder scans are available when it finishes.</p>}
 
       <ScanStatus state={scanner} onCancel={onCancel} onDismissError={onDismissError} />
 

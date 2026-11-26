@@ -123,6 +123,12 @@ describe('matcher with the shipped database', () => {
     ['C:\\$Recycle.Bin', 'recycle-bin', 'DONT_TOUCH'],
     ['C:\\Users\\a\\AppData\\Local\\Programs', 'user-programs', 'CAUTION'],
     ['C:\\Users\\a\\AppData\\Local\\Programs\\Ollama\\lib', 'user-programs', 'CAUTION'],
+    ['C:\\Users\\a\\AppData\\Local\\Google\\Play Games', 'google-play-games', 'CAUTION'],
+    ['C:\\Users\\a\\AppData\\Local\\Google\\Play Games\\Emulator', 'google-play-games', 'CAUTION'],
+    ['C:\\Users\\a\\AppData\\Local\\Google\\AndroidStudio2025.1.2', 'android-studio-system', 'REBUILDS_AUTOMATICALLY'],
+    ['C:\\Users\\a\\AppData\\Local\\Google\\DriveFS', 'google-drive-cache', 'CAUTION'],
+    ['C:\\Users\\a\\AppData\\Local\\Google\\Chrome', 'chrome-profile', 'DONT_TOUCH'],
+    ['C:\\Users\\a\\AppData\\Local\\Microsoft\\Edge', 'edge-profile', 'DONT_TOUCH'],
     ['C:\\Windows\\WinSxS', 'winsxs', 'DONT_TOUCH']
   ])('%s -> %s (%s)', (path, expectedId, expectedVerdict) => {
     expect(id(path)).toBe(expectedId)

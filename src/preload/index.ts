@@ -19,6 +19,7 @@ const api: DirvoApi = {
   removeApiKey: (provider) => ipcRenderer.invoke('settings:removeKey', provider),
   testApiKey: () => ipcRenderer.invoke('settings:testKey'),
   scanDrive: (scanId, root) => ipcRenderer.invoke('drive:scan', scanId, root),
+  breakdownFolder: (scanId, path, minBytes) => ipcRenderer.invoke('folder:breakdown', scanId, path, minBytes),
   onDriveEvent: (cb) => {
     const listener = (_e: Electron.IpcRendererEvent, event: DriveScanEvent): void => cb(event)
     ipcRenderer.on('drive:event', listener)

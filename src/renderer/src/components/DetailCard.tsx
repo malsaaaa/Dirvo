@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { BreakdownControls } from '../hooks/useDriveScan'
 import type { ScannedFolder } from '../hooks/useScanner'
 import { formatBytes, formatCount, formatDate } from '../lib/format'
 import { VERDICT_STYLE } from '../lib/verdict'
@@ -24,11 +25,12 @@ interface Props {
   item: ScannedFolder
   onRetryAi: () => void
   onOpenSettings: () => void
+  breakdown: BreakdownControls
 }
 
 const PANEL = 'rounded-lg border p-4 text-sm'
 
-function UnknownPanel({ item, onRetryAi, onOpenSettings }: Props): React.JSX.Element {
+function UnknownPanel({ item, onRetryAi, onOpenSettings }: Pick<Props, 'item' | 'onRetryAi' | 'onOpenSettings'>): React.JSX.Element {
   if (item.aiStatus === 'loading') {
     return (
       <div className={`${PANEL} border-line bg-hover`} aria-live="polite">
@@ -76,7 +78,61 @@ function UnknownPanel({ item, onRetryAi, onOpenSettings }: Props): React.JSX.Ele
   )
 }
 
-export default function DetailCard({ item, onRetryAi, onOpenSettings }: Props): React.JSX.Element {
+/**
+ * "Look inside": scans each folder directly inside this one, so a big unknown folder is split into
+ * parts that can be recognised and ruled on separately. They appear under it in the ledger.
+ */
+function InsideRow({ item, breakdown }: { item: ScannedFolder; breakdown: BreakdownControls }): React.JSX.Element {
+  const m = item.metadata
+  const running = breakdown.runningPath === m.path
+  const inside = item.lookedInside
+
+  if (running) {
+    return (
+      <div aria-live="polite">
+        <p>Looking inside…</p>
+        <p className="mt-1 font-mono text-xs tabular-nums text-ink-3">
+          {formatCount(breakdown.foldersScanned)} scanned · {formatCount(breakdown.listed)} listed
+        </p>
+        <Button className="mt-3 h-8 px-3 text-xs" onClick={breakdown.cancel}>
+          Cancel
+        </Button>
+      </div>
+    )
+  }
+
+  if (inside) {
+    return (
+      <div>
+        <p>
+          {inside.listed > 0
+            ? `${formatCount(inside.listed)} folder${inside.listed === 1 ? '' : 's'} listed under it in the results`
+            : 'No folder inside is big enough to list'}
+        </p>
+        {(inside.hiddenSmall > 0 || inside.skipped > 0) && (
+          <p className="mt-1 text-xs text-ink-3">
+            {inside.hiddenSmall > 0 && `${formatCount(inside.hiddenSmall)} smaller folder${inside.hiddenSmall === 1 ? '' : 's'} left out. `}
+            {inside.skipped > 0 && `${formatCount(inside.skipped)} could not be read (permissions).`}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <p className="text-ink-2">
+        {formatCount(m.dirCount)} folder{m.dirCount === 1 ? '' : 's'} inside. Scan each one to see which parts can be cleaned.
+      </p>
+      <Button className="mt-3 h-8 px-3 text-xs" onClick={() => breakdown.start(m.path, m.sizeBytes)} disabled={breakdown.busy}>
+        Look inside
+      </Button>
+      {breakdown.busy && <p className="mt-2 text-xs text-ink-3">Another scan is running</p>}
+    </div>
+  )
+}
+
+export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown }: Props): React.JSX.Element {
   const { metadata: m, explanation: e } = item
   const [feedback, setFeedback] = useState('')
 
@@ -151,6 +207,11 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings }: Props): 
               </Row>
             )}
           </>
+        )}
+        {m.dirCount > 0 && (
+          <Row label="Inside">
+            <InsideRow item={item} breakdown={breakdown} />
+          </Row>
         )}
         <Row label="Size" mono>
           {formatBytes(m.sizeBytes)}

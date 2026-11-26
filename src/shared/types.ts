@@ -166,6 +166,11 @@ export interface DirvoApi {
    * onDriveEvent. Cancel with cancelScan(scanId).
    */
   scanDrive: (scanId: string, root: string) => Promise<DriveScanOutcome>
+  /**
+   * "Look inside": scans the folders directly inside one folder and streams them through onDriveEvent.
+   * minBytes hides tiny folders (the main process keeps it between 256 KB and 1 GB). Cancel with cancelScan.
+   */
+  breakdownFolder: (scanId: string, path: string, minBytes: number) => Promise<DriveScanOutcome>
   /** Returns an unsubscribe function. */
   onDriveEvent: (cb: (event: DriveScanEvent) => void) => () => void
   /** Returns an unsubscribe function. */
@@ -182,4 +187,6 @@ export interface ScannedFolder {
   explanation: FolderExplanation | null
   aiStatus: AiStatus
   aiError?: string
+  /** Set once the user has used "Look inside" on this folder. */
+  lookedInside?: { listed: number; hiddenSmall: number; skipped: number }
 }

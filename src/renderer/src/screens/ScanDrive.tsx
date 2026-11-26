@@ -102,7 +102,7 @@ export default function ScanDrive({
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="text-sm font-medium">
-                Scanning <span className="font-mono">{scanner.drive}</span>
+                Scanning <span className="font-mono">{scanner.target}</span>
               </p>
               <p className="mt-1 font-mono text-xs tabular-nums text-ink-3">
                 {scanner.progress

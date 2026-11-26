@@ -12,7 +12,9 @@ Pick a folder, or scan a whole drive. Dirvo reads only folder metadata (names, s
 
 - **Explain a folder:** choose a folder with the Windows picker, or paste a path.
 - **Scan a drive:** looks inside Windows, Program Files, ProgramData, user profiles and AppData, scans each folder, and lists the big ones ranked by size.
-- **Reclaimable space:** after a scan, one figure shows how much space sits in folders rated Safe or Rebuilds, and a bar splits everything scanned by verdict. Folders inside other listed folders are not counted twice.
+- **Reclaimable space:** after a scan, one figure shows how much space sits in folders rated Safe or Rebuilds, and a bar splits everything scanned by verdict. Space is never counted twice when one result is inside another.
+- **Look inside:** on any folder with subfolders, one button scans each subfolder and rules on it separately. The pieces appear indented under their parent, so a big unknown folder can be broken down until the parts are recognised.
+- **To clean:** for known folders, Dirvo says how to clean them the safe way: plain steps, a command you can copy (never run for you), or a button that opens the right Windows settings page. For example, `npm cache clean --force` for npm's cache, or Storage settings for Windows Update files.
 - **Colour-coded verdicts:** every folder gets one of four verdicts (see below), plus what it is, what created it, and what happens if you delete it.
 - **Offline first:** about 80 common folders (browser caches, `node_modules`, npm and Gradle caches, Windows Update, Temp, Package Cache, Docker, ...) are recognised with no network.
 - **AI for the rest:** unknown folders can be explained by an AI model of your choice, using your own key or a model running on your PC (see [AI providers](#ai-providers)).
@@ -142,7 +144,11 @@ Add an entry to [`data/known-folders.json`](data/known-folders.json):
   "createdBy": "npm",
   "verdict": "REBUILDS_AUTOMATICALLY",
   "confidence": "HIGH",
-  "consequenceIfDeleted": "npm re-downloads packages when needed, so the next installs are slower."
+  "consequenceIfDeleted": "npm re-downloads packages when needed, so the next installs are slower.",
+  "howToClean": {
+    "text": "npm can clear its own cache, which is safer than deleting files by hand.",
+    "command": "npm cache clean --force"
+  }
 }
 ```
 
@@ -150,12 +156,13 @@ Add an entry to [`data/known-folders.json`](data/known-folders.json):
 - `includeDescendants` also matches anything inside the folder.
 - `confidence` is optional and defaults to `HIGH`. Use `MEDIUM` when the same folder name can mean different things.
 - The database is validated when the app starts, and `npm test` checks the shipped file. Bad verdicts, duplicate ids and over-broad patterns fail loudly.
+- `howToClean` is optional advice shown as "To clean". It has `text`, and optionally a `command` and a `settings` page (`storage` or `apps`). Dirvo never runs a command; it only offers to copy it. Commands must be on the exact allow-list in [`src/main/knowledge/clean-commands.ts`](src/main/knowledge/clean-commands.ts), which only contains each tool cleaning its own cache (no `rm`, `del` or `Remove-Item`). A command that is not on the list makes the database fail validation, so adding one needs a deliberate code change.
 - When in doubt, pick the more cautious verdict.
 
 ## Known limitations
 
 - Windows only.
-- A big unknown folder is reported as one item. For example, a large `AppData\Local\<vendor>` folder is not broken down further.
+- A drive scan reports a big unknown folder as one item. Use **Look inside** on it to break it down one level at a time.
 - Sizes are the sum of file sizes. Folders that share files between copies (such as `WinSxS`) can differ from what Explorer reports.
 - Files sitting directly inside container folders (such as `pagefile.sys`) are not listed in a drive scan.
 - No installer or auto-update yet.

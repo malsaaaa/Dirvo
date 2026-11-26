@@ -62,6 +62,50 @@ function createWindow(): void {
 /** Folder scans and drive scans, by scan id. Both can be cancelled the same way. */
 const activeScans = new Map<string, { cancel: () => void }>()
 
+const MIN_BREAKDOWN_BYTES = 256 * 1024
+const MAX_BREAKDOWN_BYTES = 1024 * 1024 * 1024
+
+/**
+ * Splits `root` into folders and scans each one (see scanDrive), streaming results to the window.
+ * Used for whole drives and for "look inside". `isContainer` decides which folders are opened up
+ * instead of scanned whole. Never reads file contents.
+ */
+async function runBreakdownScan(
+  sender: Electron.WebContents,
+  scanId: string,
+  root: string,
+  isContainer: (path: string) => boolean,
+  minBytes: number | undefined
+): Promise<DriveScanOutcome> {
+  const emit = (event: DriveScanEvent): void => {
+    if (!sender.isDestroyed()) sender.send('drive:event', event)
+  }
+  const handle = scanDrive(
+    root,
+    {
+      isContainer,
+      explain: explainPath,
+      scanFolder: (path, onProgress) => startScan(workerPath, path, onProgress),
+      listChildDirs: async (path) => {
+        const entries = await fsp.readdir(path, { withFileTypes: true })
+        // Links and junctions are never followed (they would double count or loop).
+        return entries.filter((d) => d.isDirectory() && !d.isSymbolicLink()).map((d) => join(path, d.name))
+      }
+    },
+    {
+      onItem: (item) => emit({ scanId, type: 'item', item }),
+      onProgress: (progress) => emit({ scanId, type: 'progress', progress })
+    },
+    minBytes === undefined ? {} : { minBytes: Math.min(MAX_BREAKDOWN_BYTES, Math.max(MIN_BREAKDOWN_BYTES, minBytes)) }
+  )
+  activeScans.set(scanId, handle)
+  try {
+    return await handle.promise
+  } finally {
+    activeScans.delete(scanId)
+  }
+}
+
 function registerIpc(): void {
   ipcMain.handle('app:version', () => app.getVersion())
 
@@ -111,33 +155,27 @@ function registerIpc(): void {
       return { status: 'error', message: 'That drive is not available' }
     }
 
-    const sender = e.sender
-    const emit = (event: DriveScanEvent): void => {
-      if (!sender.isDestroyed()) sender.send('drive:event', event)
+    return runBreakdownScan(e.sender, scanId, driveRoot, isContainerFolder, undefined)
+  })
+
+  // "Look inside": scan the folders directly inside one folder, so a big unknown folder is split into
+  // pieces that can be recognised. Only the chosen folder is opened up; its subfolders are scanned whole.
+  ipcMain.handle('folder:breakdown', async (e, scanId: unknown, path: unknown, minBytes: unknown): Promise<DriveScanOutcome> => {
+    if (typeof scanId !== 'string' || scanId.length === 0 || scanId.length > 100) {
+      return { status: 'error', message: 'Invalid scan id' }
     }
-    const handle = scanDrive(
-      driveRoot,
-      {
-        isContainer: isContainerFolder,
-        explain: explainPath,
-        scanFolder: (path, onProgress) => startScan(workerPath, path, onProgress),
-        listChildDirs: async (path) => {
-          const entries = await fsp.readdir(path, { withFileTypes: true })
-          // Links and junctions are never followed (they would double count or loop).
-          return entries.filter((d) => d.isDirectory() && !d.isSymbolicLink()).map((d) => join(path, d.name))
-        }
-      },
-      {
-        onItem: (item) => emit({ scanId, type: 'item', item }),
-        onProgress: (progress) => emit({ scanId, type: 'progress', progress })
-      }
-    )
-    activeScans.set(scanId, handle)
+    if (typeof path !== 'string' || !isAbsolute(path)) return { status: 'error', message: 'Invalid folder' }
+    if (activeScans.has(scanId)) return { status: 'error', message: 'Scan already running' }
+
+    const folder = normalize(path).replace(/[\\/]+$/, '') || normalize(path)
     try {
-      return await handle.promise
-    } finally {
-      activeScans.delete(scanId)
+      if (!(await fsp.stat(folder)).isDirectory()) return { status: 'error', message: 'That is not a folder' }
+    } catch {
+      return { status: 'error', message: 'That folder is not available' }
     }
+
+    const min = typeof minBytes === 'number' && Number.isFinite(minBytes) ? minBytes : undefined
+    return runBreakdownScan(e.sender, scanId, folder, (p) => p === folder, min)
   })
 
   ipcMain.handle('drives:list', async (): Promise<DriveInfo[]> => {

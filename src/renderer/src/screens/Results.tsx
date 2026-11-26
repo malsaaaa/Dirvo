@@ -2,6 +2,7 @@ import Button from '../components/Button'
 import DetailCard from '../components/DetailCard'
 import ReclaimBand from '../components/ReclaimBand'
 import ResultsList from '../components/ResultsList'
+import type { BreakdownControls } from '../hooks/useDriveScan'
 import type { ScannedFolder } from '../hooks/useScanner'
 import { formatCount } from '../lib/format'
 import { summarize } from '../lib/summary'
@@ -14,6 +15,7 @@ interface Props {
   onGoPick: () => void
   onRetryAi: (path: string) => void
   onOpenSettings: () => void
+  breakdown: BreakdownControls
   /** One line about where the results came from, e.g. the last drive scan. */
   note?: string | null
 }
@@ -26,6 +28,7 @@ export default function Results({
   onGoPick,
   onRetryAi,
   onOpenSettings,
+  breakdown,
   note
 }: Props): React.JSX.Element {
   if (items.length === 0) {
@@ -70,6 +73,7 @@ export default function Results({
             item={selected}
             onRetryAi={() => onRetryAi(selected.metadata.path)}
             onOpenSettings={onOpenSettings}
+            breakdown={breakdown}
           />
         </aside>
       </div>

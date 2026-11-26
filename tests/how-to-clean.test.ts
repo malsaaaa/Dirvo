@@ -112,6 +112,7 @@ describe('the shipped database', () => {
     expect(byId.get('winsxs')?.howToClean?.command).toBe('DISM /Online /Cleanup-Image /StartComponentCleanup')
     expect(byId.get('user-temp')?.howToClean?.settings).toBe('storage')
     expect(byId.get('user-programs')?.howToClean?.settings).toBe('apps')
+    expect(byId.get('google-play-games')?.howToClean?.settings).toBe('apps')
   })
 
   it('never suggests deleting Docker, WinSxS or browser data by hand', () => {

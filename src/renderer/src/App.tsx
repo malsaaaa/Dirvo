@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import { FolderSearch, HardDrive, Rows3, Settings2, type LucideIcon } from 'lucide-react'
 import type { DriveScanItem, DriveScanOutcome } from '@shared/types'
 import Logo from './components/Logo'
-import { useDriveScan } from './hooks/useDriveScan'
+import { useDriveScan, type BreakdownControls, type ScanKind } from './hooks/useDriveScan'
 import { useScanner, type ScannedFolder } from './hooks/useScanner'
 import PickFolder from './screens/PickFolder'
 import Results from './screens/Results'
@@ -25,11 +25,25 @@ export default function App(): React.JSX.Element {
   const itemsRef = useRef<ScannedFolder[]>([])
   itemsRef.current = items
   const [lastDrive, setLastDrive] = useState<{ drive: string; outcome: DriveScanOutcome; listed: number } | null>(null)
-  const driveListed = useRef(0)
 
-  /** Adds a result, or replaces the earlier result for the same folder. */
+  /**
+   * Adds a result, or refreshes the earlier result for the same folder. A refreshed result keeps
+   * what the user already learned about it (an AI explanation, and having looked inside).
+   */
   const upsert = useCallback((item: ScannedFolder) => {
-    setItems((prev) => [...prev.filter((i) => i.metadata.path !== item.metadata.path), item])
+    setItems((prev) => {
+      const old = prev.find((i) => i.metadata.path === item.metadata.path)
+      const merged: ScannedFolder = old
+        ? {
+            ...item,
+            explanation: item.explanation ?? old.explanation,
+            aiStatus: item.explanation ? 'none' : old.aiStatus,
+            aiError: item.explanation ? undefined : old.aiError,
+            lookedInside: old.lookedInside
+          }
+        : item
+      return [...prev.filter((i) => i.metadata.path !== item.metadata.path), merged]
+    })
   }, [])
 
   const patch = useCallback((path: string, change: Partial<ScannedFolder>) => {
@@ -71,26 +85,44 @@ export default function App(): React.JSX.Element {
   const driveScanner = useDriveScan({
     onItem: useCallback(
       (item: DriveScanItem) => {
-        driveListed.current++
         upsert({ ...item, aiStatus: 'none' })
       },
       [upsert]
     ),
-    onFinished: useCallback((outcome: DriveScanOutcome, drive: string) => {
-      setLastDrive({ drive, outcome, listed: driveListed.current })
-      if (outcome.status === 'done' && driveListed.current > 0) {
-        setSelectedPath(null)
-        setScreen('results')
-      }
-    }, [])
+    onFinished: useCallback(
+      (outcome: DriveScanOutcome, target: string, kind: ScanKind, listed: number) => {
+        if (kind === 'breakdown') {
+          // Stay where we are: the folders just appeared under their parent in the ledger.
+          if (outcome.status === 'done') {
+            patch(target, { lookedInside: { listed, hiddenSmall: outcome.hiddenSmall, skipped: outcome.skipped } })
+          }
+          return
+        }
+        setLastDrive({ drive: target, outcome, listed })
+        if (outcome.status === 'done' && listed > 0) {
+          setSelectedPath(null)
+          setScreen('results')
+        }
+      },
+      [patch]
+    )
   })
   const driveBusy = driveScanner.state.status === 'scanning'
   const folderBusy = scanner.state.status === 'scanning'
 
   const startDriveScan = (drive: string): void => {
-    driveListed.current = 0
     setLastDrive(null)
     void driveScanner.start(drive)
+  }
+
+  const scanState = driveScanner.state
+  const breakdown: BreakdownControls = {
+    runningPath: scanState.status === 'scanning' && scanState.kind === 'breakdown' ? scanState.target : null,
+    listed: scanState.status === 'scanning' ? scanState.listed : 0,
+    foldersScanned: scanState.status === 'scanning' ? (scanState.progress?.foldersScanned ?? 0) : 0,
+    busy: driveBusy || folderBusy,
+    start: (path, size) => void driveScanner.startBreakdown(path, size),
+    cancel: driveScanner.cancel
   }
 
   // After the provider or a key changes, retry folders that were waiting or failed.
@@ -169,6 +201,7 @@ export default function App(): React.JSX.Element {
             onGoPick={() => setScreen('pick')}
             onRetryAi={(p) => void runAi(p)}
             onOpenSettings={() => setScreen('settings')}
+            breakdown={breakdown}
             note={
               lastDrive?.outcome.status === 'done'
                 ? `Drive ${lastDrive.drive} · folders of ${Math.round(lastDrive.outcome.minBytes / 1048576)} MB or more`
