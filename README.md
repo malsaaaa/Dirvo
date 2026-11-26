@@ -14,6 +14,7 @@ Pick a folder, or scan a whole drive. Dirvo reads only folder metadata (names, s
 - **Scan a drive:** looks inside Windows, Program Files, ProgramData, user profiles and AppData, scans each folder, and lists the big ones ranked by size.
 - **Reclaimable space:** after a scan, one figure shows how much space sits in folders rated Safe or Rebuilds, and a bar splits everything scanned by verdict. Space is never counted twice when one result is inside another.
 - **Look inside:** on any folder with subfolders, one button scans each subfolder and rules on it separately. The pieces appear indented under their parent, so a big unknown folder can be broken down until the parts are recognised.
+- **Remembers your scans:** results are saved and come back when you reopen the app. Rescan a folder and Dirvo shows what changed: "+3.1 GB since Nov 12" next to the folder, and a "since the last scan" line above the results.
 - **Search, filter and sort:** find a folder by name, path or who made it, show only one ruling (for example just the Reclaimable ones), and sort by size, name, or how long it has been untouched. Without a search or filter the results stay a tree; while you search or filter they become a flat list.
 - **To clean:** for known folders, Dirvo says how to clean them the safe way: plain steps, a command you can copy (never run for you), or a button that opens the right Windows settings page. For example, `npm cache clean --force` for npm's cache, or Storage settings for Windows Update files.
 - **Colour-coded verdicts:** every folder gets one of four verdicts (see below), plus what it is, what created it, and what happens if you delete it.
@@ -79,7 +80,7 @@ Pick one in **Settings**. Each provider keeps its own encrypted key, so you can 
 - Folder names are treated as untrusted data in the prompt, and the AI's reply is strictly validated before it is shown or cached.
 - `contextIsolation` is on, `nodeIntegration` is off, the window is sandboxed, and the renderer only talks to the main process through a typed preload bridge (`window.dirvo`).
 
-Local files are stored in `%APPDATA%\dirvo`: one encrypted key file per provider (for example `anthropic-key.bin`), `ai-settings.json` (provider, model and address choices, no secrets) and `ai-cache.json` (cached answers, with the username already redacted).
+Local files are stored in `%APPDATA%\dirvo`: one encrypted key file per provider (for example `anthropic-key.bin`), `ai-settings.json` (provider, model and address choices, no secrets) `ai-cache.json` (cached answers, with the username already redacted), and `saved-scans.json` (your latest results and the size of each scanned folder, so Dirvo can show what changed). Unlike the AI cache, `saved-scans.json` holds real paths and sample file names, including your username. It never leaves your PC, and **Settings → Saved scans → Forget** deletes it. Only AI answers are stored in it; rulings from the database are recomputed on every launch, so database updates improve old results.
 
 ## Getting started
 

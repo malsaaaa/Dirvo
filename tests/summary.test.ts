@@ -11,7 +11,8 @@ const item = (path: string, size: number, verdict: Verdict | null): ScannedFolde
   explanation: verdict
     ? { whatItIs: 'x', createdBy: 'y', verdict, confidence: 'HIGH', consequenceIfDeleted: 'z', source: 'database' }
     : null,
-  aiStatus: 'none'
+  aiStatus: 'none',
+  scannedAt: '2026-11-20T10:00:00.000Z'
 })
 
 describe('summarize', () => {

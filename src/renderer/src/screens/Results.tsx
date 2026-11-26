@@ -6,6 +6,7 @@ import ResultsList from '../components/ResultsList'
 import type { BreakdownControls } from '../hooks/useDriveScan'
 import type { ScannedFolder } from '../hooks/useScanner'
 import { formatCount } from '../lib/format'
+import { changesSince, scanSpan } from '../lib/history'
 import { DEFAULT_VIEW, applyView, SORT_LABELS, type LedgerView } from '../lib/ledger-view'
 import { summarize } from '../lib/summary'
 
@@ -18,6 +19,7 @@ interface Props {
   onRetryAi: (path: string) => void
   onOpenSettings: () => void
   breakdown: BreakdownControls
+  onRescan: (path: string) => void
   /** The search, filter and sort. Kept by the app so they survive switching screens. */
   view: LedgerView
   onViewChange: (view: LedgerView) => void
@@ -34,6 +36,7 @@ export default function Results({
   onRetryAi,
   onOpenSettings,
   breakdown,
+  onRescan,
   view,
   onViewChange,
   note
@@ -59,7 +62,7 @@ export default function Results({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {items.length > 1 && <ReclaimBand summary={summarize(items)} note={note} />}
+      {items.length > 1 && <ReclaimBand summary={summarize(items)} note={note} change={changesSince(items)} span={scanSpan(items)} />}
 
       <div className="flex min-h-0 flex-1">
         <section className="flex min-w-0 flex-1 flex-col">
@@ -101,6 +104,7 @@ export default function Results({
             onRetryAi={() => onRetryAi(selected.metadata.path)}
             onOpenSettings={onOpenSettings}
             breakdown={breakdown}
+            onRescan={() => onRescan(selected.metadata.path)}
           />
         </aside>
       </div>

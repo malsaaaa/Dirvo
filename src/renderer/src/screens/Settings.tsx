@@ -7,12 +7,16 @@ import { applyTheme, getStoredTheme, type Theme } from '../lib/theme'
 interface Props {
   /** Called after the provider or a key changes, so folders that were waiting can be re-explained. */
   onAiChanged: () => void
+  /** How many results are saved on this PC. */
+  savedCount: number
+  /** Deletes the saved results and size history. */
+  onForgetScans: () => void
 }
 
 const LABEL = 'text-sm font-medium text-ink-2'
 const CARD = 'rounded-lg border border-line bg-surface p-5'
 
-export default function Settings({ onAiChanged }: Props): React.JSX.Element {
+export default function Settings({ onAiChanged, savedCount, onForgetScans }: Props): React.JSX.Element {
   const [cfg, setCfg] = useState<AiConfig | null>(null)
   const [model, setModel] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
@@ -20,6 +24,7 @@ export default function Settings({ onAiChanged }: Props): React.JSX.Element {
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<ActionResult | null>(null)
   const [theme, setTheme] = useState<Theme>(getStoredTheme)
+  const [confirmForget, setConfirmForget] = useState(false)
 
   const refresh = useCallback(async () => {
     const c = await window.dirvo.getAiConfig()
@@ -224,6 +229,33 @@ export default function Settings({ onAiChanged }: Props): React.JSX.Element {
               {t === 'dark' ? 'Dark' : 'Light'}
             </Button>
           ))}
+        </div>
+      </section>
+
+      <section className={CARD}>
+        <h2 className="text-base font-medium">Saved scans</h2>
+        <p className="mt-2 text-sm text-ink-2">
+          Dirvo keeps your latest results and the size of each folder you scan on this PC, so it can show what changed
+          next time. They are never uploaded.
+        </p>
+        <p className="mt-2 text-sm text-ink-3">
+          <span className="font-mono tabular-nums">{savedCount}</span> folder{savedCount === 1 ? '' : 's'} saved
+        </p>
+        <div className="mt-4">
+          <Button
+            variant="danger"
+            onClick={() => {
+              if (!confirmForget) {
+                setConfirmForget(true)
+                setTimeout(() => setConfirmForget(false), 4000)
+                return
+              }
+              setConfirmForget(false)
+              onForgetScans()
+            }}
+          >
+            {confirmForget ? 'Click again to confirm' : 'Forget saved scans'}
+          </Button>
         </div>
       </section>
 

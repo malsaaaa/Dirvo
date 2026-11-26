@@ -1,4 +1,6 @@
-import { formatBytes, formatCount } from '../lib/format'
+import { ArrowDown, ArrowUp } from 'lucide-react'
+import { formatBytes, formatCount, formatDate, formatDateTime, formatDelta } from '../lib/format'
+import type { Changes } from '../lib/history'
 import type { Summary } from '../lib/summary'
 import { BUCKET_ORDER, UNKNOWN_STYLE, VERDICT_STYLE, type Bucket } from '../lib/verdict'
 
@@ -17,11 +19,20 @@ const BUCKET_DOT: Record<Bucket, string> = {
   UNKNOWN: UNKNOWN_STYLE.dot
 }
 
+interface BandProps {
+  summary: Summary
+  note?: string | null
+  /** Net change since the last scan of the same folders, if any were scanned before. */
+  change?: Changes | null
+  /** First and last scan dates among the results. */
+  span?: { first: string; last: string } | null
+}
+
 /**
  * The one rich moment on the results screen: how much space could come back, and where all the
- * scanned space sits, split by verdict.
+ * scanned space sits, split by verdict. Also shows when it was scanned and what changed since before.
  */
-export default function ReclaimBand({ summary, note }: { summary: Summary; note?: string | null }): React.JSX.Element {
+export default function ReclaimBand({ summary, note, change, span }: BandProps): React.JSX.Element {
   const { reclaimableBytes, reclaimableCount, totalBytes, byBucket, count } = summary
   const parts = BUCKET_ORDER.filter((b) => byBucket[b].bytes > 0)
   const label = parts.map((b) => `${BUCKET_LABEL[b]} ${formatBytes(byBucket[b].bytes)}`).join(', ')
@@ -39,6 +50,25 @@ export default function ReclaimBand({ summary, note }: { summary: Summary; note?
           : `None of the ${formatCount(count)} folders is rated Safe or Rebuilds. `}
         {note}
       </p>
+      {span && (
+        <p className="mt-1 text-sm text-ink-3">
+          {Date.parse(span.last) - Date.parse(span.first) > 24 * 60 * 60 * 1000
+            ? `Scanned ${formatDate(span.first)} to ${formatDate(span.last)}`
+            : `Scanned ${formatDateTime(span.last)}`}
+        </p>
+      )}
+      {change && (
+        <p className="mt-2 flex flex-wrap items-center gap-x-2 text-sm text-ink-2">
+          {change.bytes > 0 ? <ArrowUp size={14} strokeWidth={1.5} aria-hidden /> : <ArrowDown size={14} strokeWidth={1.5} aria-hidden />}
+          Since {formatDateTime(change.since)}:
+          <span className="font-mono font-medium tabular-nums text-ink">{formatDelta(change.bytes)}</span>
+          {change.changed > 0 && (
+            <span className="text-ink-3">
+              across {formatCount(change.changed)} changed folder{change.changed === 1 ? '' : 's'}
+            </span>
+          )}
+        </p>
+      )}
 
       <div
         role="img"

@@ -1,8 +1,9 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { FolderSearch, HardDrive, Rows3, Settings2, type LucideIcon } from 'lucide-react'
-import type { DriveScanItem, DriveScanOutcome } from '@shared/types'
+import type { DriveScanItem, DriveScanOutcome, SavedScans } from '@shared/types'
 import Logo from './components/Logo'
 import { useDriveScan, type BreakdownControls, type ScanKind } from './hooks/useDriveScan'
+import { recordScan, type History } from './lib/history'
 import { DEFAULT_VIEW, type LedgerView } from './lib/ledger-view'
 import { useScanner, type ScannedFolder } from './hooks/useScanner'
 import PickFolder from './screens/PickFolder'
@@ -26,13 +27,23 @@ export default function App(): React.JSX.Element {
   const [view, setView] = useState<LedgerView>(DEFAULT_VIEW)
   const itemsRef = useRef<ScannedFolder[]>([])
   itemsRef.current = items
+  // Latest known size of every scanned folder. Kept outside the results so it survives "Clear list".
+  const historyRef = useRef<History>({})
+  // Saving waits until the saved results have been loaded, so an empty list never overwrites them.
+  const [hydrated, setHydrated] = useState(false)
+  const hydratedRef = useRef(false)
+  const latestSave = useRef<SavedScans>({ items: [], history: {} })
   const [lastDrive, setLastDrive] = useState<{ drive: string; outcome: DriveScanOutcome; listed: number } | null>(null)
 
   /**
    * Adds a result, or refreshes the earlier result for the same folder. A refreshed result keeps
    * what the user already learned about it (an AI explanation, and having looked inside).
    */
-  const upsert = useCallback((item: ScannedFolder) => {
+  const upsert = useCallback((scanned: ScannedFolder) => {
+    // Compare with the last time this folder was scanned (outside the state update, which must stay pure).
+    const rec = recordScan(historyRef.current, scanned.metadata.path, scanned.metadata.sizeBytes, scanned.scannedAt)
+    historyRef.current = rec.history
+    const item: ScannedFolder = { ...scanned, ...(rec.previous ? { previous: rec.previous } : {}) }
     setItems((prev) => {
       const old = prev.find((i) => i.metadata.path === item.metadata.path)
       const merged: ScannedFolder = old
@@ -87,7 +98,7 @@ export default function App(): React.JSX.Element {
   const driveScanner = useDriveScan({
     onItem: useCallback(
       (item: DriveScanItem) => {
-        upsert({ ...item, aiStatus: 'none' })
+        upsert({ ...item, aiStatus: 'none', scannedAt: new Date().toISOString() })
       },
       [upsert]
     ),
@@ -133,6 +144,51 @@ export default function App(): React.JSX.Element {
       if (i.aiStatus === 'no-key' || i.aiStatus === 'error') void runAi(i.metadata.path)
     }
   }, [runAi])
+
+  // Load the results saved last time. Offline rulings come back recomputed from the current database.
+  useEffect(() => {
+    let cancelled = false
+    window.dirvo
+      .loadScans()
+      .then((saved) => {
+        if (cancelled) return
+        historyRef.current = { ...saved.history, ...historyRef.current }
+        // Anything scanned while loading wins over what was saved.
+        setItems((prev) => [...saved.items.filter((s) => !prev.some((p) => p.metadata.path === s.metadata.path)), ...prev])
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (cancelled) return
+        hydratedRef.current = true
+        setHydrated(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Save a moment after the results stop changing, and once more when the window closes.
+  useEffect(() => {
+    if (!hydrated) return
+    latestSave.current = { items, history: historyRef.current }
+    const t = setTimeout(() => void window.dirvo.saveScans(latestSave.current).catch(() => undefined), 1500)
+    return () => clearTimeout(t)
+  }, [items, hydrated])
+  useEffect(() => {
+    const flush = (): void => {
+      if (hydratedRef.current) void window.dirvo.saveScans(latestSave.current).catch(() => undefined)
+    }
+    window.addEventListener('beforeunload', flush)
+    return () => window.removeEventListener('beforeunload', flush)
+  }, [])
+
+  const forgetScans = useCallback(() => {
+    historyRef.current = {}
+    setItems([])
+    setSelectedPath(null)
+    setView(DEFAULT_VIEW)
+    void window.dirvo.forgetScans()
+  }, [])
 
   const unknownWaiting = items.filter((i) => i.aiStatus === 'no-key').length
 
@@ -204,6 +260,7 @@ export default function App(): React.JSX.Element {
             onRetryAi={(p) => void runAi(p)}
             onOpenSettings={() => setScreen('settings')}
             breakdown={breakdown}
+            onRescan={(p) => void scanner.start(p)}
             view={view}
             onViewChange={setView}
             note={
@@ -213,7 +270,7 @@ export default function App(): React.JSX.Element {
             }
           />
         )}
-        {screen === 'settings' && <Settings onAiChanged={onAiChanged} />}
+        {screen === 'settings' && <Settings onAiChanged={onAiChanged} savedCount={items.length} onForgetScans={forgetScans} />}
       </main>
     </div>
   )

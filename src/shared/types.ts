@@ -132,6 +132,13 @@ export type DriveScanOutcome =
   | { status: 'cancelled' }
   | { status: 'error'; message: string }
 
+/** Results and size history saved on this PC between sessions. */
+export interface SavedScans {
+  items: ScannedFolder[]
+  /** Latest known size of every folder ever scanned, by lower-cased path. Survives "Clear list". */
+  history: Record<string, SizeSnapshot>
+}
+
 /** The one API the renderer may use. Implemented in preload, handled in main. */
 export interface DirvoApi {
   appVersion: () => Promise<string>
@@ -146,6 +153,12 @@ export interface DirvoApi {
   listDrives: () => Promise<DriveInfo[]>
   /** Offline lookup: system rules, then the known-folder database. Null means unknown. */
   explainFolder: (path: string) => Promise<FolderExplanation | null>
+  /** Loads the results saved last time (offline rulings are recomputed from the current database). */
+  loadScans: () => Promise<SavedScans>
+  /** Saves the current results and size history on this PC. Nothing is uploaded. */
+  saveScans: (saved: SavedScans) => Promise<void>
+  /** Deletes the saved results and size history. */
+  forgetScans: () => Promise<void>
   /** Copies one of Dirvo's cleanup commands to the clipboard. Refused for anything not on the allow-list. */
   copyCommand: (command: string) => Promise<void>
   /** Opens a Windows Settings page. Only the pages in SettingsTarget are allowed. */
@@ -180,6 +193,12 @@ export interface DirvoApi {
 /** 'none': nothing pending. 'loading': asking the AI. 'no-key': AI needed but no key is set up. */
 export type AiStatus = 'none' | 'loading' | 'no-key' | 'error'
 
+/** A folder's size at one point in time, kept so a later scan can show what changed. */
+export interface SizeSnapshot {
+  sizeBytes: number
+  scannedAt: string
+}
+
 /** One result in the list: what the scanner found, plus Dirvo's answer if it has one. */
 export interface ScannedFolder {
   metadata: FolderMetadata
@@ -187,6 +206,10 @@ export interface ScannedFolder {
   explanation: FolderExplanation | null
   aiStatus: AiStatus
   aiError?: string
+  /** When this result was scanned (ISO date). */
+  scannedAt: string
+  /** The size from the scan before this one, if the folder was scanned before. */
+  previous?: SizeSnapshot
   /** Set once the user has used "Look inside" on this folder. */
   lookedInside?: { listed: number; hiddenSmall: number; skipped: number }
 }

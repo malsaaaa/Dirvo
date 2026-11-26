@@ -24,6 +24,26 @@ export function formatDate(iso: string | null): string {
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+/** "Nov 26, 9:10 PM". The year is added only when it is not the current one. */
+export function formatDateTime(iso: string | null, now: Date = new Date()): string {
+  if (!iso) return 'Unknown'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return 'Unknown'
+  const sameYear = d.getFullYear() === now.getFullYear()
+  return d.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    ...(sameYear ? {} : { year: 'numeric' }),
+    hour: 'numeric',
+    minute: '2-digit'
+  })
+}
+
+/** "+1.2 GB" or "−300 MB". Uses a real minus sign. */
+export function formatDelta(bytes: number): string {
+  return `${bytes < 0 ? '−' : '+'}${formatBytes(Math.abs(bytes))}`
+}
+
 /** Shortens a long path in the middle so both the drive and the folder name stay visible. */
 export function shortenPath(path: string, max = 60): string {
   if (path.length <= max) return path

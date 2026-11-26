@@ -3,6 +3,7 @@ import { promises as fsp } from 'node:fs'
 import { homedir, userInfo } from 'node:os'
 import { basename, isAbsolute, join, normalize } from 'node:path'
 import { AiCache } from './ai/cache'
+import { SavedScansStore } from './storage/saved-scans'
 import { AiSettingsStore, SettingsError } from './ai/provider-settings'
 import { EncryptionUnavailableError, KeyFormatError, KeyStore } from './ai/key-store'
 import { explainWithAi, testApiKey } from './ai/service'
@@ -58,6 +59,8 @@ function createWindow(): void {
     win.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
+
+let savedScans: SavedScansStore | null = null
 
 /** Folder scans and drive scans, by scan id. Both can be cancelled the same way. */
 const activeScans = new Map<string, { cancel: () => void }>()
@@ -207,6 +210,13 @@ function registerIpc(): void {
 
   // --- AI fallback and settings. The API key only ever lives in this process. ---
   const userData = app.getPath('userData')
+  // Results and size history, kept on this PC between sessions. Nothing is uploaded.
+  savedScans = new SavedScansStore(join(userData, 'saved-scans.json'), explainPath)
+  const scansStore = savedScans
+  ipcMain.handle('scans:load', () => scansStore.load())
+  ipcMain.handle('scans:save', (_e, saved: unknown) => scansStore.save(saved))
+  ipcMain.handle('scans:forget', () => scansStore.clear())
+
   const aiSettings = new AiSettingsStore(join(userData, 'ai-settings.json'))
   // One encrypted key file per provider. Anthropic keeps its original file name, so keys saved by
   // earlier versions still work.
@@ -315,5 +325,6 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   for (const scan of activeScans.values()) scan.cancel()
-  app.quit()
+  // Let a save that is still being written finish before the app exits.
+  void (savedScans ? savedScans.idle() : Promise.resolve()).finally(() => app.quit())
 })

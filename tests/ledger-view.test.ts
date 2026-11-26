@@ -21,7 +21,8 @@ const item = (
   explanation: verdict
     ? { whatItIs: 'x', createdBy: over.createdBy ?? 'Someone', verdict, confidence: 'HIGH', consequenceIfDeleted: 'z', source: 'database' }
     : null,
-  aiStatus: 'none'
+  aiStatus: 'none',
+  scannedAt: '2026-11-20T10:00:00.000Z'
 })
 
 const sample = [

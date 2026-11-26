@@ -39,7 +39,7 @@ export function useScanner(onDone: (item: ScannedFolder) => void): {
       if (outcome.status === 'done') {
         const explanation = await window.dirvo.explainFolder(outcome.result.path)
         setState({ status: 'idle' })
-        onDoneRef.current({ metadata: outcome.result, explanation, aiStatus: 'none' })
+        onDoneRef.current({ metadata: outcome.result, explanation, aiStatus: 'none', scannedAt: new Date().toISOString() })
       } else if (outcome.status === 'cancelled') {
         setState({ status: 'idle' })
       } else {

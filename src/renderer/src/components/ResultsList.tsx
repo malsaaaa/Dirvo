@@ -1,5 +1,6 @@
-import { CornerDownRight } from 'lucide-react'
-import { formatBytes, shortenPath } from '../lib/format'
+import { ArrowDown, ArrowUp, CornerDownRight } from 'lucide-react'
+import { formatBytes, formatDelta, shortenPath } from '../lib/format'
+import { deltaOf } from '../lib/history'
 import type { LedgerRow } from '../lib/tree'
 import VerdictBadge from './VerdictBadge'
 
@@ -32,7 +33,9 @@ export default function ResultsList({ rows, maxBytes, selectedPath, onSelect, la
         </span>
         <span role="columnheader">Ruling</span>
       </div>
-      {rows.map(({ item: { metadata: m, explanation: e }, depth }) => {
+      {rows.map(({ item, depth }) => {
+        const { metadata: m, explanation: e } = item
+        const delta = deltaOf(item)
         const selected = m.path === selectedPath
         return (
           <button
@@ -62,8 +65,17 @@ export default function ResultsList({ rows, maxBytes, selectedPath, onSelect, la
                 </span>
               </span>
             </span>
-            <span role="cell" className="relative text-right font-mono text-sm tabular-nums">
-              {formatBytes(m.sizeBytes)}
+            <span role="cell" className="relative text-right font-mono tabular-nums">
+              <span className="block text-sm">{formatBytes(m.sizeBytes)}</span>
+              {delta && (
+                <span
+                  className="mt-0.5 flex items-center justify-end gap-0.5 text-xs text-ink-3"
+                  title={`${formatDelta(delta.bytes)} since the scan on ${new Date(delta.since).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                >
+                  {delta.bytes > 0 ? <ArrowUp size={11} strokeWidth={1.5} aria-hidden /> : <ArrowDown size={11} strokeWidth={1.5} aria-hidden />}
+                  {formatDelta(delta.bytes).slice(1)}
+                </span>
+              )}
             </span>
             <span role="cell" className="relative">
               <VerdictBadge verdict={e?.verdict ?? null} short />

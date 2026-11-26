@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { BreakdownControls } from '../hooks/useDriveScan'
 import type { ScannedFolder } from '../hooks/useScanner'
-import { formatBytes, formatCount, formatDate } from '../lib/format'
+import { formatBytes, formatCount, formatDate, formatDateTime, formatDelta } from '../lib/format'
+import { deltaOf } from '../lib/history'
 import { VERDICT_STYLE } from '../lib/verdict'
 import Button from './Button'
 
@@ -26,6 +27,7 @@ interface Props {
   onRetryAi: () => void
   onOpenSettings: () => void
   breakdown: BreakdownControls
+  onRescan: () => void
 }
 
 const PANEL = 'rounded-lg border p-4 text-sm'
@@ -132,7 +134,7 @@ function InsideRow({ item, breakdown }: { item: ScannedFolder; breakdown: Breakd
   )
 }
 
-export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown }: Props): React.JSX.Element {
+export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown, onRescan }: Props): React.JSX.Element {
   const { metadata: m, explanation: e } = item
   const [feedback, setFeedback] = useState('')
 
@@ -153,6 +155,7 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown 
   }
 
   const topTypes = Object.entries(m.extensionCounts).slice(0, 8)
+  const delta = deltaOf(item)
 
   return (
     <article className="flex flex-col gap-5">
@@ -215,10 +218,16 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown 
         )}
         <Row label="Size" mono>
           {formatBytes(m.sizeBytes)}
+          {delta && (
+            <span className="ml-2 font-sans text-xs text-ink-3">
+              {formatDelta(delta.bytes)} since {formatDateTime(delta.since)}
+            </span>
+          )}
         </Row>
         <Row label="Contents" mono>
           {formatCount(m.fileCount)} files · {formatCount(m.dirCount)} folders
         </Row>
+        <Row label="Scanned">{formatDateTime(item.scannedAt)}</Row>
         <Row label="Created">{formatDate(m.createdAt)}</Row>
         <Row label="Changed">
           {formatDate(m.modifiedAt)}
@@ -270,6 +279,9 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown 
       <footer className="flex flex-wrap items-center gap-2 pt-1">
         <Button onClick={() => void window.dirvo.openInExplorer(m.path)}>Open in Explorer</Button>
         <Button onClick={() => void copy()}>Copy path</Button>
+        <Button onClick={onRescan} disabled={breakdown.busy}>
+          Rescan
+        </Button>
         <span className="text-xs text-ok-text" aria-live="polite">
           {feedback}
         </span>
