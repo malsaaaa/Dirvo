@@ -77,7 +77,10 @@ function UnknownPanel({ item, onRetryAi, onOpenSettings }: Props): React.JSX.Ele
   return (
     <div className={`${base} border-slate-200 bg-slate-50 text-slate-700`}>
       <p className="font-semibold">Dirvo doesn&apos;t recognise this folder</p>
-      <p className="mt-0.5">Treat it as important until you know what created it.</p>
+      <p className="mt-0.5">Treat it as important until you know what created it, or ask Claude to take a look.</p>
+      <button onClick={onRetryAi} className="mt-3 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500">
+        Explain with AI
+      </button>
     </div>
   )
 }

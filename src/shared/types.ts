@@ -66,6 +66,36 @@ export type ScanOutcome =
   | { status: 'cancelled' }
   | { status: 'error'; message: string }
 
+export interface DriveScanItem {
+  metadata: FolderMetadata
+  /** Offline answer only. Unknown folders are not sent to the AI automatically during a drive scan. */
+  explanation: FolderExplanation | null
+}
+
+export interface DriveScanProgress {
+  foldersScanned: number
+  bytesScanned: number
+  /** Folders being scanned right now. */
+  current: string[]
+}
+
+export type DriveScanEvent =
+  | { scanId: string; type: 'item'; item: DriveScanItem }
+  | { scanId: string; type: 'progress'; progress: DriveScanProgress }
+
+export type DriveScanOutcome =
+  | {
+      status: 'done'
+      foldersScanned: number
+      /** Folders smaller than the size threshold, scanned but not listed. */
+      hiddenSmall: number
+      /** Folders that could not be read at all (permissions). */
+      skipped: number
+      minBytes: number
+    }
+  | { status: 'cancelled' }
+  | { status: 'error'; message: string }
+
 /** The one API the renderer may use. Implemented in preload, handled in main. */
 export interface DirvoApi {
   appVersion: () => Promise<string>
@@ -87,6 +117,13 @@ export interface DirvoApi {
   saveApiKey: (key: string) => Promise<ActionResult>
   removeApiKey: () => Promise<ActionResult>
   testApiKey: () => Promise<ActionResult>
+  /**
+   * Scans a whole drive (e.g. "C:\\"): splits it into folders, scans each, and streams results via
+   * onDriveEvent. Cancel with cancelScan(scanId).
+   */
+  scanDrive: (scanId: string, root: string) => Promise<DriveScanOutcome>
+  /** Returns an unsubscribe function. */
+  onDriveEvent: (cb: (event: DriveScanEvent) => void) => () => void
   /** Returns an unsubscribe function. */
   onScanProgress: (cb: (scanId: string, progress: ScanProgress) => void) => () => void
 }

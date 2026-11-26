@@ -1,4 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
+import type { DriveScanItem, DriveScanOutcome } from '@shared/types'
+import { useDriveScan } from './hooks/useDriveScan'
 import { useScanner, type ScannedFolder } from './hooks/useScanner'
 import PickFolder from './screens/PickFolder'
 import Results from './screens/Results'
@@ -20,6 +22,13 @@ export default function App(): React.JSX.Element {
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const itemsRef = useRef<ScannedFolder[]>([])
   itemsRef.current = items
+  const [lastDrive, setLastDrive] = useState<{ drive: string; outcome: DriveScanOutcome; listed: number } | null>(null)
+  const driveListed = useRef(0)
+
+  /** Adds a result, or replaces the earlier result for the same folder. */
+  const upsert = useCallback((item: ScannedFolder) => {
+    setItems((prev) => [...prev.filter((i) => i.metadata.path !== item.metadata.path), item])
+  }, [])
 
   const patch = useCallback((path: string, change: Partial<ScannedFolder>) => {
     setItems((prev) => prev.map((i) => (i.metadata.path === path ? { ...i, ...change } : i)))
@@ -27,12 +36,12 @@ export default function App(): React.JSX.Element {
 
   /** Asks the AI about a folder Dirvo does not know. Only called when the offline lookup found nothing. */
   const runAi = useCallback(
-    async (path: string) => {
-      const item = itemsRef.current.find((i) => i.metadata.path === path)
-      if (!item) return
+    async (path: string, knownMetadata?: ScannedFolder['metadata']) => {
+      const metadata = knownMetadata ?? itemsRef.current.find((i) => i.metadata.path === path)?.metadata
+      if (!metadata) return
       patch(path, { aiStatus: 'loading', aiError: undefined })
       try {
-        const r = await window.dirvo.aiExplain(item.metadata)
+        const r = await window.dirvo.aiExplain(metadata)
         if (r.status === 'ok') patch(path, { explanation: r.explanation, aiStatus: 'none' })
         else if (r.status === 'no-key') patch(path, { aiStatus: 'no-key' })
         else patch(path, { aiStatus: 'error', aiError: r.message })
@@ -45,17 +54,42 @@ export default function App(): React.JSX.Element {
 
   const onDone = useCallback(
     (item: ScannedFolder) => {
-      // Scanning the same folder again replaces the old result.
-      itemsRef.current = [...itemsRef.current.filter((i) => i.metadata.path !== item.metadata.path), item]
-      setItems(itemsRef.current)
+      upsert(item)
       setSelectedPath(item.metadata.path)
       setScreen('results')
-      if (!item.explanation) void runAi(item.metadata.path)
+      if (!item.explanation) void runAi(item.metadata.path, item.metadata)
     },
-    [runAi]
+    [runAi, upsert]
   )
 
   const scanner = useScanner(onDone)
+
+  // Drive scans list results as they arrive. Unknown folders are NOT sent to the AI automatically
+  // (there can be hundreds); each has an "Explain with AI" button instead.
+  const driveScanner = useDriveScan({
+    onItem: useCallback(
+      (item: DriveScanItem) => {
+        driveListed.current++
+        upsert({ ...item, aiStatus: 'none' })
+      },
+      [upsert]
+    ),
+    onFinished: useCallback((outcome: DriveScanOutcome, drive: string) => {
+      setLastDrive({ drive, outcome, listed: driveListed.current })
+      if (outcome.status === 'done' && driveListed.current > 0) {
+        setSelectedPath(null)
+        setScreen('results')
+      }
+    }, [])
+  })
+  const driveBusy = driveScanner.state.status === 'scanning'
+  const folderBusy = scanner.state.status === 'scanning'
+
+  const startDriveScan = (drive: string): void => {
+    driveListed.current = 0
+    setLastDrive(null)
+    void driveScanner.start(drive)
+  }
 
   // After a key is saved, explain any folders that were waiting for one.
   const onKeyChanged = useCallback(() => {
@@ -86,6 +120,9 @@ export default function App(): React.JSX.Element {
             {n.id === 'results' && items.length > 0 && (
               <span className="rounded-full bg-slate-200 px-1.5 text-xs text-slate-700">{items.length}</span>
             )}
+            {n.id === 'drive' && driveBusy && (
+              <span className="h-2 w-2 animate-pulse rounded-full bg-indigo-500" title="Scanning a drive" />
+            )}
             {n.id === 'settings' && unknownWaiting > 0 && (
               <span className="h-2 w-2 rounded-full bg-amber-500" title="An API key is needed to explain unknown folders" />
             )}
@@ -98,12 +135,23 @@ export default function App(): React.JSX.Element {
         {screen === 'pick' && (
           <PickFolder
             scanner={scanner.state}
+            blocked={driveBusy}
             onScan={(p) => void scanner.start(p)}
             onCancel={scanner.cancel}
             onDismissError={scanner.clearError}
           />
         )}
-        {screen === 'drive' && <ScanDrive />}
+        {screen === 'drive' && (
+          <ScanDrive
+            scanner={driveScanner.state}
+            last={lastDrive}
+            folderScanBusy={folderBusy}
+            onScan={startDriveScan}
+            onCancel={driveScanner.cancel}
+            onDismissError={driveScanner.clearError}
+            onViewResults={() => setScreen('results')}
+          />
+        )}
         {screen === 'results' && (
           <Results
             items={items}
@@ -116,6 +164,11 @@ export default function App(): React.JSX.Element {
             onGoPick={() => setScreen('pick')}
             onRetryAi={(p) => void runAi(p)}
             onOpenSettings={() => setScreen('settings')}
+            note={
+              lastDrive?.outcome.status === 'done'
+                ? `Drive ${lastDrive.drive} · folders of ${Math.round(lastDrive.outcome.minBytes / 1048576)} MB or more`
+                : null
+            }
           />
         )}
         {screen === 'settings' && <Settings onKeyChanged={onKeyChanged} />}

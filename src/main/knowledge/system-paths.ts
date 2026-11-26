@@ -135,6 +135,23 @@ export function matchProtectedFolder(path: string): FolderExplanation | null {
   return null
 }
 
+// Protected folders that mostly just hold other folders. A drive scan looks inside them instead of
+// reporting them as one big lump.
+const CONTAINER_IDS = new Set([
+  'sys-drive-root',
+  'sys-windows',
+  'sys-program-files',
+  'sys-programdata',
+  'sys-users',
+  'sys-profile-root',
+  'sys-appdata-roots'
+])
+
+export function isContainerFolder(path: string): boolean {
+  const id = matchProtectedFolder(path)?.matchedId
+  return id !== undefined && CONTAINER_IDS.has(id)
+}
+
 /** The path is inside a protected system tree (Windows, Program Files). */
 export function matchProtectedTree(path: string): FolderExplanation | null {
   const segments = splitPath(path)

@@ -4,14 +4,16 @@ import type { ScannerState } from '../hooks/useScanner'
 
 interface Props {
   scanner: ScannerState
+  /** A drive scan is running, so folder scans wait. */
+  blocked: boolean
   onScan: (path: string) => void
   onCancel: () => void
   onDismissError: () => void
 }
 
-export default function PickFolder({ scanner, onScan, onCancel, onDismissError }: Props): React.JSX.Element {
+export default function PickFolder({ scanner, blocked, onScan, onCancel, onDismissError }: Props): React.JSX.Element {
   const [typed, setTyped] = useState('')
-  const busy = scanner.status === 'scanning'
+  const busy = scanner.status === 'scanning' || blocked
   // Accept C:\ style paths only; the main process validates again.
   const typedOk = /^[a-zA-Z]:[\\/]/.test(typed.trim())
 
@@ -65,6 +67,8 @@ export default function PickFolder({ scanner, onScan, onCancel, onDismissError }
           Explain
         </button>
       </form>
+
+      {blocked && <p className="text-sm text-slate-600">A drive scan is running. Folder scans are available when it finishes.</p>}
 
       <ScanStatus state={scanner} onCancel={onCancel} onDismissError={onDismissError} />
     </div>

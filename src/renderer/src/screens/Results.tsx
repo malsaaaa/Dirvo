@@ -10,6 +10,8 @@ interface Props {
   onGoPick: () => void
   onRetryAi: (path: string) => void
   onOpenSettings: () => void
+  /** One line about where the results came from, e.g. the last drive scan. */
+  note?: string | null
 }
 
 export default function Results({
@@ -19,7 +21,8 @@ export default function Results({
   onClear,
   onGoPick,
   onRetryAi,
-  onOpenSettings
+  onOpenSettings,
+  note
 }: Props): React.JSX.Element {
   if (items.length === 0) {
     return (
@@ -33,7 +36,9 @@ export default function Results({
     )
   }
 
-  const selected = items.find((i) => i.metadata.path === selectedPath) ?? items[0]
+  // With nothing selected, show the biggest folder (the list is ranked by size).
+  const biggest = items.reduce((a, b) => (b.metadata.sizeBytes > a.metadata.sizeBytes ? b : a))
+  const selected = items.find((i) => i.metadata.path === selectedPath) ?? biggest
 
   return (
     <div className="flex h-full min-h-0">
@@ -44,6 +49,7 @@ export default function Results({
             Clear list
           </button>
         </div>
+        {note && <p className="px-4 pb-2 text-xs text-slate-500">{note}</p>}
         <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
           <ResultsList items={items} selectedPath={selected.metadata.path} onSelect={onSelect} />
         </div>

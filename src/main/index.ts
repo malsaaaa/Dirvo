@@ -6,9 +6,11 @@ import { AiCache } from './ai/cache'
 import { EncryptionUnavailableError, KeyFormatError, KeyStore } from './ai/key-store'
 import { explainWithAi, testApiKey } from './ai/service'
 import workerPath from './scanner/worker?modulePath'
-import { startScan, type ScanHandle } from './scanner/scanner'
+import { startScan } from './scanner/scanner'
+import { scanDrive } from './scanner/drive-scan'
 import { explainPath } from './knowledge/explain'
-import type { ActionResult, FolderExplanation, KeyStatus, ScanOutcome } from '../shared/types'
+import { isContainerFolder } from './knowledge/system-paths'
+import type { ActionResult, DriveScanEvent, DriveScanOutcome, FolderExplanation, KeyStatus, ScanOutcome } from '../shared/types'
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -40,7 +42,8 @@ function createWindow(): void {
   }
 }
 
-const activeScans = new Map<string, ScanHandle>()
+/** Folder scans and drive scans, by scan id. Both can be cancelled the same way. */
+const activeScans = new Map<string, { cancel: () => void }>()
 
 function registerIpc(): void {
   ipcMain.handle('app:version', () => app.getVersion())
@@ -74,7 +77,53 @@ function registerIpc(): void {
     return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0]
   })
 
-  ipcMain.handle('drives:list', async (): Promise<string[]> => {
+  ipcMain.handle('drive:scan', async (e, scanId: unknown, root: unknown): Promise<DriveScanOutcome> => {
+    if (typeof scanId !== 'string' || scanId.length === 0 || scanId.length > 100) {
+      return { status: 'error', message: 'Invalid scan id' }
+    }
+    // Only whole drives: "C:" or "C:\"
+    if (typeof root !== 'string' || !/^[a-zA-Z]:[\\/]?$/.test(root)) {
+      return { status: 'error', message: 'Choose a drive to scan' }
+    }
+    if (activeScans.has(scanId)) return { status: 'error', message: 'Scan already running' }
+
+    const driveRoot = `${root[0].toUpperCase()}:\\`
+    try {
+      await fsp.access(driveRoot)
+    } catch {
+      return { status: 'error', message: 'That drive is not available' }
+    }
+
+    const sender = e.sender
+    const emit = (event: DriveScanEvent): void => {
+      if (!sender.isDestroyed()) sender.send('drive:event', event)
+    }
+    const handle = scanDrive(
+      driveRoot,
+      {
+        isContainer: isContainerFolder,
+        explain: explainPath,
+        scanFolder: (path, onProgress) => startScan(workerPath, path, onProgress),
+        listChildDirs: async (path) => {
+          const entries = await fsp.readdir(path, { withFileTypes: true })
+          // Links and junctions are never followed (they would double count or loop).
+          return entries.filter((d) => d.isDirectory() && !d.isSymbolicLink()).map((d) => join(path, d.name))
+        }
+      },
+      {
+        onItem: (item) => emit({ scanId, type: 'item', item }),
+        onProgress: (progress) => emit({ scanId, type: 'progress', progress })
+      }
+    )
+    activeScans.set(scanId, handle)
+    try {
+      return await handle.promise
+    } finally {
+      activeScans.delete(scanId)
+    }
+  })
+
+  ipcMain.handle('drives:list',async (): Promise<string[]> => {
     const letters = 'CDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
     const found = await Promise.all(
       letters.map((l) =>
