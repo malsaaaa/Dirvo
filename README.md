@@ -2,7 +2,7 @@
 
 # Dirvo
 
-**Mystery folders, explained.** Dirvo is a Windows desktop app that tells you what a folder or file is, which app made it, how big it is, whether it is safe to delete, and what happens if you delete it.
+**Mystery folders and files, explained.** Dirvo is a Windows desktop app that tells you what a folder or file is, which app made it, how big it is, whether it is safe to delete, and what happens if you delete it.
 
 Pick a folder or a file, or scan a whole drive. Dirvo reads only metadata (names, sizes, counts and dates), never file contents.
 
@@ -12,19 +12,19 @@ Pick a folder or a file, or scan a whole drive. Dirvo reads only metadata (names
 
 - **Explain a folder or a file:** choose one with the Windows pickers, or paste a path. A file gets the same four rulings: what it is, who made it, whether you can delete it, and what happens if you do.
 - **Files in scans:** a drive scan and **Look inside** also list big files that sit directly in the folders they open (`pagefile.sys`, `hiberfil.sys`, a forgotten installer or disc image), and every scanned folder shows its five **Biggest files**, each with a ruling and an **Explain** button.
-- **Scan a drive:** looks inside Windows, Program Files, ProgramData, user profiles and AppData, scans each folder, and lists the big ones ranked by size.
-- **Reclaimable space:** after a scan, one figure shows how much space sits in folders rated Safe or Rebuilds, and a bar splits everything scanned by verdict. Space is never counted twice when one result is inside another.
+- **Scan a drive:** looks inside Windows, Program Files, ProgramData, user profiles and AppData, scans each folder, and lists the big folders and files ranked by size.
+- **Reclaimable space:** after a scan, one figure shows how much space sits in folders and files rated Safe or Rebuilds, and a bar splits everything scanned by verdict. Space is never counted twice when one result is inside another.
 - **Look inside:** on any folder with subfolders, one button scans each subfolder and rules on it separately. The pieces appear indented under their parent, so a big unknown folder can be broken down until the parts are recognised.
-- **Remembers your scans:** results are saved and come back when you reopen the app. Rescan a folder and Dirvo shows what changed: "+3.1 GB since Nov 12" next to the folder, and a "since the last scan" line above the results.
-- **Export a report:** save the results as a Markdown report (summary, a table, and a detail section for each folder) or a CSV spreadsheet. You can export everything or just what your search and filter show. Your Windows username is replaced with `<USER>` by default, so the report is safe to paste into a forum or ticket. CSV cells that start with `=`, `+`, `-` or `@` are neutralised, so a hostile folder name cannot run as a spreadsheet formula.
-- **Idle hints:** Dirvo uses the dates of the newest files to show how long a folder has sat untouched ("idle 2 y" in the list, "Nothing in it has changed for 2 years" on the folder). The summary says how much of the reclaimable space is in folders untouched for over a year, an **Idle 1y+** toggle shows only those folders, and reports include the idle time. A folder with no known date is never called idle.
-- **Explain unknown folders:** after a scan, one button asks your AI provider about every unrecognised folder, largest first. A dialog first says how many folders, which provider, where the data goes and exactly what is sent, and nothing is sent until you confirm. It does at most 50 per run, two at a time, can be cancelled, and stops by itself if there is no key or the AI fails three times in a row.
-- **Keyboard shortcuts:** move through the results with `j` and `k` (or the arrow keys), then act on the selected folder: `o` opens it in Explorer, `c` copies its path, `r` rescans it, `i` looks inside it, `a` asks the AI. `/` or `Ctrl+F` searches, `Ctrl+E` exports, `Ctrl+1` to `Ctrl+4` switch screens, and `?` shows the full list. Shortcuts never fire while you are typing in a box or while a dialog is open, and normal combos like `Ctrl+C` are left alone.
-- **Search, filter and sort:** find a folder by name, path or who made it, show only one ruling (for example just the Reclaimable ones), and sort by size, name, or how long it has been untouched. Without a search or filter the results stay a tree; while you search or filter they become a flat list.
+- **Remembers your scans:** results are saved and come back when you reopen the app. Rescan a folder or file and Dirvo shows what changed: "+3.1 GB since Nov 12" next to the folder, and a "since the last scan" line above the results.
+- **Export a report:** save the results as a Markdown report (summary, a table, and a detail section for each folder or file) or a CSV spreadsheet with a Type column. You can export everything or just what your search and filter show. Your Windows username is replaced with `<USER>` by default, so the report is safe to paste into a forum or ticket. CSV cells that start with `=`, `+`, `-` or `@` are neutralised, so a hostile folder or file name cannot run as a spreadsheet formula.
+- **Idle hints:** Dirvo uses the dates of the newest files to show how long a folder has sat untouched ("idle 2 y" in the list, "Nothing in it has changed for 2 years" on the folder). A file shows when it last changed. The summary says how much of the reclaimable space is in folders untouched for over a year, an **Idle 1y+** toggle shows only those folders, and reports include the idle time. A folder with no known date is never called idle.
+- **Explain unknown folders and files:** after a scan, one button asks your AI provider about every unrecognised folder or file, largest first. A dialog first says how many items, which provider, where the data goes and exactly what is sent, and nothing is sent until you confirm. It does at most 50 per run, two at a time, can be cancelled, and stops by itself if there is no key or the AI fails three times in a row.
+- **Keyboard shortcuts:** move through the results with `j` and `k` (or the arrow keys), then act on the selected result: `o` opens it in Explorer, `c` copies its path, `r` rescans it, `i` looks inside it, `a` asks the AI. `/` or `Ctrl+F` searches, `Ctrl+E` exports, `Ctrl+1` to `Ctrl+4` switch screens, and `?` shows the full list. Shortcuts never fire while you are typing in a box or while a dialog is open, and normal combos like `Ctrl+C` are left alone.
+- **Search, filter and sort:** find a folder or file by name, path or who made it, show only one ruling (for example just the Reclaimable ones), and sort by size, name, or how long it has been untouched. Without a search or filter the results stay a tree; while you search or filter they become a flat list.
 - **To clean:** for known folders, Dirvo says how to clean them the safe way: plain steps, a command you can copy (never run for you), or a button that opens the right Windows settings page. For example, `npm cache clean --force` for npm's cache, or Storage settings for Windows Update files.
-- **Colour-coded verdicts:** every folder gets one of four verdicts (see below), plus what it is, what created it, and what happens if you delete it.
+- **Colour-coded verdicts:** every folder and file gets one of four verdicts (see below), plus what it is, what created it, and what happens if you delete it.
 - **Offline first:** about 40 well-known files and file types (`pagefile.sys`, `ntuser.dat`, thumbnail caches, crash dumps, documents, photos, videos, archives, disk images, ...) and about 80 common folders (browser caches, `node_modules`, npm and Gradle caches, Windows Update, Temp, Package Cache, Docker, ...) are recognised with no network.
-- **AI for the rest:** unknown folders can be explained by an AI model of your choice, using your own key or a model running on your PC (see [AI providers](#ai-providers)).
+- **AI for the rest:** unknown folders and files can be explained by an AI model of your choice, using your own key or a model running on your PC (see [AI providers](#ai-providers)).
 - **Dark by default:** the app opens in a dark theme. Switch to light in **Settings → Appearance**, and your choice is remembered.
 - **Cancelable, with progress:** scans run in worker threads, so the app stays responsive.
 
@@ -186,6 +186,15 @@ Add an entry to [`data/known-folders.json`](data/known-folders.json):
 - The database is validated when the app starts, and `npm test` checks the shipped file. Bad verdicts, duplicate ids and over-broad patterns fail loudly.
 - `howToClean` is optional advice shown as "To clean". It has `text`, and optionally a `command` and a `settings` page (`storage` or `apps`). Dirvo never runs a command; it only offers to copy it. Commands must be on the exact allow-list in [`src/main/knowledge/clean-commands.ts`](src/main/knowledge/clean-commands.ts), which only contains each tool cleaning its own cache (no `rm`, `del` or `Remove-Item`). A command that is not on the list makes the database fail validation, so adding one needs a deliberate code change.
 - When in doubt, pick the more cautious verdict.
+
+## Adding a known file
+
+Files use the same format and the same validator, in [`data/known-files.json`](data/known-files.json). A pattern is matched against the whole file path:
+
+- A name such as `pagefile.sys` or `Thumbs.db` is an exact rule and wins over a type. Add `<drive>/` in front to pin it to a drive root, as `pagefile.sys` is.
+- A pattern that starts with `*` (for example `*.docx`) is a type rule. It says what kind of file this is, and it only applies when no exact rule and no known folder around the file says more.
+- A type that can hold the user's own work must be `CAUTION` or `DONT_TOUCH`. `npm test` checks this for the shipped types.
+- `howToClean` works as for folders, with the same allow-list of commands.
 
 ## Known limitations
 
