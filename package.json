@@ -38,6 +38,7 @@
   },
   "productName": "Dirvo",
   "author": "malsaaaa",
+  "license": "MIT",
   "homepage": "https://github.com/malsaaaa/Dirvo",
   "repository": {
     "type": "git",

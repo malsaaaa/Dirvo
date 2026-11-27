@@ -187,4 +187,6 @@ Add an entry to [`data/known-folders.json`](data/known-folders.json):
 
 ## License
 
-No license has been chosen yet.
+Dirvo is released under the [MIT License](LICENSE). You can use, copy, modify and share it, including commercially, as long as you keep the copyright notice. It comes with no warranty.
+
+It bundles the Geist fonts (SIL Open Font License) and Electron (MIT), which keep their own licenses.
