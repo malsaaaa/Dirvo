@@ -8,6 +8,23 @@ Pick a folder or a file, or scan a whole drive. Dirvo reads only metadata (names
 
 > **Dirvo never deletes anything.** It only advises. The only actions are **Open in Explorer** and **Copy path**.
 
+## Screenshots
+
+![Dirvo's results screen: 33 GB reclaimable, a ledger of folders and files with rulings, and the npm cache selected with its cleanup command](docs/screenshots/results.png)
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/file.png" alt="A file explained: hiberfil.sys rated Be careful, with the safe way to remove it"></td>
+    <td width="50%"><img src="docs/screenshots/biggest-files.png" alt="A folder's card with its biggest files, each with a ruling and an Explain button"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>A file explained, with the safe way to reclaim its space</sub></td>
+    <td align="center"><sub>A folder's biggest files, each with a ruling</sub></td>
+  </tr>
+</table>
+
+<sub>The screenshots use made-up folders and sizes, not a real PC.</sub>
+
 ## Features
 
 - **Explain a folder or a file:** choose one with the Windows pickers, or paste a path. A file gets the same four rulings: what it is, who made it, whether you can delete it, and what happens if you do.
