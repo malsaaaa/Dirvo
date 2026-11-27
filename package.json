@@ -81,6 +81,12 @@
       "artifactName": "Dirvo-Setup-${version}.exe",
       "deleteAppDataOnUninstall": false
     },
-    "publish": null
+    "publish": null,
+    "extraFiles": [
+      {
+        "from": "LICENSE",
+        "to": "LICENSE.txt"
+      }
+    ]
   }
 }
