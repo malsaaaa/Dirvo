@@ -62,8 +62,21 @@ export interface ActionResult {
   message: string
 }
 
-/** Metadata about a folder. Collected without ever reading file contents. */
+/** One of the biggest files inside a folder, noted during the scan. */
+export interface LargeFile {
+  path: string
+  sizeBytes: number
+  modifiedAt: string | null
+}
+
+/**
+ * Metadata about a folder, or about a single file when `kind` is 'file'. Collected without ever
+ * reading file contents. A file is described with the same fields so it can sit in the same list: its
+ * size is the file size, fileCount is 1, dirCount is 0 and its only extension is its own.
+ */
 export interface FolderMetadata {
+  /** Missing means a folder (older saved results have no kind). */
+  kind?: 'folder' | 'file'
   path: string
   name: string
   sizeBytes: number
@@ -82,7 +95,15 @@ export interface FolderMetadata {
   unreadableCount: number
   /** Symlinks / junctions are never followed; this counts them. */
   linksSkipped: number
+  /** Folders only: up to 5 of the biggest files inside (1 MB or more), biggest first. */
+  largestFiles?: LargeFile[]
 }
+
+/** Result of looking at one file. A typed path that turns out to be a folder is reported as such. */
+export type FileInspectOutcome =
+  | { status: 'done'; result: FolderMetadata; explanation: FolderExplanation | null }
+  | { status: 'folder' }
+  | { status: 'error'; message: string }
 
 export interface ScanProgress {
   currentPath: string
@@ -161,10 +182,19 @@ export interface DirvoApi {
   cancelScan: (scanId: string) => Promise<void>
   /** Opens the Windows folder picker. Null if the user cancels. */
   pickFolder: () => Promise<string | null>
+  /** Opens the Windows file picker. Null if the user cancels. */
+  pickFile: () => Promise<string | null>
   /** Drives that exist on this PC, with how much space is used. */
   listDrives: () => Promise<DriveInfo[]>
   /** Offline lookup: system rules, then the known-folder database. Null means unknown. */
   explainFolder: (path: string) => Promise<FolderExplanation | null>
+  /**
+   * Looks at one file (size and dates only, never its contents) and gives the offline answer.
+   * 'folder' means the path is a folder, so the caller should scan it as one.
+   */
+  inspectFile: (path: string) => Promise<FileInspectOutcome>
+  /** Offline answers for a few files at once, in the same order. Null means unknown. */
+  explainFiles: (paths: string[]) => Promise<Array<FolderExplanation | null>>
   /** Asks where to save a report (Windows save dialog) and writes it there. */
   saveReport: (request: ReportRequest) => Promise<ReportResult>
   /** Loads the results saved last time (offline rulings are recomputed from the current database). */

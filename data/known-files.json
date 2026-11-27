@@ -1,0 +1,535 @@
+[
+  {
+    "id": "pagefile",
+    "patterns": [
+      "<drive>/pagefile.sys"
+    ],
+    "verdict": "DONT_TOUCH",
+    "whatItIs": "The Windows paging file. Windows uses it as extra memory when your RAM fills up, so it is often several GB.",
+    "createdBy": "Windows",
+    "consequenceIfDeleted": "Windows will not let you delete it while running. Its size is managed in Windows settings (Advanced system settings, Performance, Virtual memory); removing it can cause crashes and out-of-memory errors."
+  },
+  {
+    "id": "swapfile",
+    "patterns": [
+      "<drive>/swapfile.sys"
+    ],
+    "verdict": "DONT_TOUCH",
+    "whatItIs": "A small Windows file that holds the memory of suspended Store apps.",
+    "createdBy": "Windows",
+    "consequenceIfDeleted": "Windows keeps it locked. Store apps rely on it to resume quickly."
+  },
+  {
+    "id": "hiberfil",
+    "patterns": [
+      "<drive>/hiberfil.sys"
+    ],
+    "verdict": "CAUTION",
+    "whatItIs": "The hibernation file. Windows saves your memory here for Hibernate and Fast Startup, so its size is a share of your RAM.",
+    "createdBy": "Windows",
+    "consequenceIfDeleted": "You cannot delete it directly. Turning hibernation off removes it and frees the space, but you lose Hibernate and Fast Startup.",
+    "howToClean": {
+      "text": "Turn hibernation off from an administrator terminal. Turn it back on any time with \"powercfg /hibernate on\".",
+      "command": "powercfg /hibernate off"
+    }
+  },
+  {
+    "id": "dumpstack",
+    "patterns": [
+      "<drive>/DumpStack.log.tmp",
+      "DumpStack.log.tmp"
+    ],
+    "verdict": "SAFE",
+    "whatItIs": "A tiny log Windows writes when it records a crash or a stack dump.",
+    "createdBy": "Windows",
+    "consequenceIfDeleted": "Nothing. Windows may recreate it."
+  },
+  {
+    "id": "memory-dmp",
+    "patterns": [
+      "<drive>/Windows/MEMORY.DMP"
+    ],
+    "verdict": "SAFE",
+    "whatItIs": "A full memory dump Windows saved after a crash (blue screen). It can be many GB.",
+    "createdBy": "Windows",
+    "consequenceIfDeleted": "You lose the crash report, which only helps when diagnosing that crash. Windows is unaffected.",
+    "howToClean": {
+      "text": "Disk Cleanup or Storage settings can remove system error memory dump files for you.",
+      "settings": "storage"
+    }
+  },
+  {
+    "id": "thumbs-db",
+    "patterns": [
+      "Thumbs.db",
+      "ehthumbs.db"
+    ],
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "whatItIs": "A cache of picture thumbnails that Windows Explorer keeps in a folder.",
+    "createdBy": "Windows Explorer",
+    "consequenceIfDeleted": "Windows recreates it the next time the folder is viewed with thumbnails. Thumbnails may load slowly once."
+  },
+  {
+    "id": "thumbcache",
+    "patterns": [
+      "thumbcache_*.db",
+      "iconcache_*.db",
+      "IconCache.db"
+    ],
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "whatItIs": "A cache of thumbnails or icons that Windows Explorer shows.",
+    "createdBy": "Windows Explorer",
+    "consequenceIfDeleted": "Windows rebuilds it automatically. Icons and thumbnails may look blank for a moment."
+  },
+  {
+    "id": "desktop-ini",
+    "patterns": [
+      "desktop.ini"
+    ],
+    "verdict": "SAFE",
+    "confidence": "MEDIUM",
+    "whatItIs": "A hidden settings file that gives a folder a custom icon or a translated display name.",
+    "createdBy": "Windows",
+    "consequenceIfDeleted": "The folder loses its custom icon or display name. Nothing else changes."
+  },
+  {
+    "id": "ntuser-dat",
+    "patterns": [
+      "ntuser.dat*",
+      "ntuser.ini",
+      "usrclass.dat*"
+    ],
+    "verdict": "DONT_TOUCH",
+    "whatItIs": "Part of a Windows user profile: it stores that account's registry settings (desktop, apps and preferences).",
+    "createdBy": "Windows",
+    "consequenceIfDeleted": "The account loses its settings or fails to sign in. Windows usually locks it while the user is signed in."
+  },
+  {
+    "id": "windows-edb",
+    "patterns": [
+      "Windows.edb"
+    ],
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "whatItIs": "The Windows Search index: a database of what is on your PC so searches are fast. It can reach many GB.",
+    "createdBy": "Windows Search",
+    "consequenceIfDeleted": "Windows rebuilds it, but search is slow and incomplete while it re-indexes, which can use a lot of CPU and disk for hours."
+  },
+  {
+    "id": "wsl-vhdx",
+    "patterns": [
+      "ext4.vhdx"
+    ],
+    "verdict": "CAUTION",
+    "whatItIs": "The virtual disk of a Linux distribution that runs under WSL. Everything in that distro, including your files there, lives inside it.",
+    "createdBy": "Windows Subsystem for Linux",
+    "consequenceIfDeleted": "You permanently lose that Linux distribution and every file you stored in it. Export it first with \"wsl --export\"."
+  },
+  {
+    "id": "docker-vhdx",
+    "patterns": [
+      "docker_data.vhdx",
+      "DockerDesktop*.vhdx"
+    ],
+    "verdict": "CAUTION",
+    "whatItIs": "The virtual disk where Docker Desktop keeps its images, containers and volumes.",
+    "createdBy": "Docker Desktop",
+    "consequenceIfDeleted": "You lose every Docker image, container and volume. Docker re-downloads images, but volume data is gone.",
+    "howToClean": {
+      "text": "Remove unused Docker data from inside Docker instead of deleting the disk.",
+      "command": "docker system prune"
+    }
+  },
+  {
+    "id": "ssh-private-key",
+    "patterns": [
+      "id_rsa",
+      "id_ed25519",
+      "id_ecdsa",
+      "id_dsa"
+    ],
+    "verdict": "DONT_TOUCH",
+    "whatItIs": "An SSH private key: your secret login for servers and services such as GitHub.",
+    "createdBy": "SSH (OpenSSH)",
+    "consequenceIfDeleted": "You lose access to every server or account that trusts this key, unless you have a copy. It cannot be regenerated to match."
+  },
+  {
+    "id": "wallet-dat",
+    "patterns": [
+      "wallet.dat"
+    ],
+    "verdict": "DONT_TOUCH",
+    "whatItIs": "A cryptocurrency wallet file. It holds the keys to coins.",
+    "createdBy": "A cryptocurrency wallet app",
+    "consequenceIfDeleted": "You can permanently lose the coins it controls if you have no backup of the keys."
+  },
+  {
+    "id": "type-temp",
+    "patterns": [
+      "*.tmp",
+      "*.temp"
+    ],
+    "verdict": "SAFE",
+    "confidence": "MEDIUM",
+    "whatItIs": "A temporary file that a program made while it worked.",
+    "createdBy": "The program that was running",
+    "consequenceIfDeleted": "Nothing, once that program is closed. If a program is still using it, Windows will not let you delete it."
+  },
+  {
+    "id": "type-log",
+    "patterns": [
+      "*.log"
+    ],
+    "verdict": "SAFE",
+    "confidence": "MEDIUM",
+    "whatItIs": "A log file: a text record of what a program or Windows did.",
+    "createdBy": "The program that wrote it",
+    "consequenceIfDeleted": "You lose the history, which only matters when diagnosing a problem. The program starts a new log."
+  },
+  {
+    "id": "type-dump",
+    "patterns": [
+      "*.dmp",
+      "*.mdmp",
+      "*.hdmp"
+    ],
+    "verdict": "SAFE",
+    "confidence": "HIGH",
+    "whatItIs": "A crash dump: a snapshot of memory saved after a program or Windows crashed.",
+    "createdBy": "Windows Error Reporting or the crashed program",
+    "consequenceIfDeleted": "You lose the crash report, which only helps diagnose that crash. Nothing stops working."
+  },
+  {
+    "id": "type-etl",
+    "patterns": [
+      "*.etl"
+    ],
+    "verdict": "SAFE",
+    "confidence": "HIGH",
+    "whatItIs": "An event trace log that Windows or a program wrote for diagnostics.",
+    "createdBy": "Windows",
+    "consequenceIfDeleted": "Only the diagnostic history is lost. Windows writes new traces as needed."
+  },
+  {
+    "id": "type-partial-download",
+    "patterns": [
+      "*.crdownload",
+      "*.part",
+      "*.partial",
+      "*.download"
+    ],
+    "verdict": "SAFE",
+    "confidence": "HIGH",
+    "whatItIs": "An unfinished download that a browser or app left behind.",
+    "createdBy": "A web browser or download manager",
+    "consequenceIfDeleted": "You lose the partial download. If it was still wanted, you have to download it again."
+  },
+  {
+    "id": "type-pyc",
+    "patterns": [
+      "*.pyc"
+    ],
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "confidence": "HIGH",
+    "whatItIs": "Python bytecode: a speed-up cache Python builds from your .py files.",
+    "createdBy": "Python",
+    "consequenceIfDeleted": "Python recreates it the next time the program runs."
+  },
+  {
+    "id": "type-ds-store",
+    "patterns": [
+      "*.ds_store"
+    ],
+    "verdict": "SAFE",
+    "confidence": "HIGH",
+    "whatItIs": "A folder-view file made by macOS that ended up on this PC.",
+    "createdBy": "macOS Finder",
+    "consequenceIfDeleted": "Nothing on Windows. It only held how the folder looked on a Mac."
+  },
+  {
+    "id": "type-shortcut",
+    "patterns": [
+      "*.lnk",
+      "*.url"
+    ],
+    "verdict": "SAFE",
+    "confidence": "MEDIUM",
+    "whatItIs": "A shortcut: a small file that points to a program, file or website.",
+    "createdBy": "Windows or an installer",
+    "consequenceIfDeleted": "Only the shortcut goes. The thing it points to is untouched."
+  },
+  {
+    "id": "type-backup",
+    "patterns": [
+      "*.bak",
+      "*.old",
+      "*.orig"
+    ],
+    "verdict": "CAUTION",
+    "confidence": "MEDIUM",
+    "whatItIs": "A backup copy of another file, kept by a program or by someone before a change.",
+    "createdBy": "A program or a person",
+    "consequenceIfDeleted": "It may be the only copy of an earlier version. Check that the current file is good first."
+  },
+  {
+    "id": "type-system-file",
+    "patterns": [
+      "*.sys",
+      "*.dll",
+      "*.drv",
+      "*.ocx"
+    ],
+    "verdict": "DONT_TOUCH",
+    "confidence": "MEDIUM",
+    "whatItIs": "A program component: a driver or library that Windows or an app loads.",
+    "createdBy": "Windows or an installed program",
+    "consequenceIfDeleted": "Programs or Windows can stop working or fail to start. Uninstall the program from Settings instead."
+  },
+  {
+    "id": "type-program",
+    "patterns": [
+      "*.exe",
+      "*.msi",
+      "*.msix",
+      "*.appx",
+      "*.bat",
+      "*.cmd",
+      "*.ps1"
+    ],
+    "verdict": "CAUTION",
+    "confidence": "MEDIUM",
+    "whatItIs": "A program or installer, or a script that runs commands.",
+    "createdBy": "A software vendor",
+    "consequenceIfDeleted": "If it is an installed program, it stops working. If it is an installer you downloaded, you can fetch it again, unless it is no longer available."
+  },
+  {
+    "id": "type-iso",
+    "patterns": [
+      "*.iso",
+      "*.img",
+      "*.wim",
+      "*.esd"
+    ],
+    "verdict": "CAUTION",
+    "confidence": "MEDIUM",
+    "whatItIs": "A disc or system image: a whole disc, installer or Windows setup packed in one file.",
+    "createdBy": "A software vendor, or you",
+    "consequenceIfDeleted": "A downloaded image can usually be downloaded again. One you made yourself is lost for good."
+  },
+  {
+    "id": "type-archive",
+    "patterns": [
+      "*.zip",
+      "*.7z",
+      "*.rar",
+      "*.tar",
+      "*.gz",
+      "*.tgz",
+      "*.bz2",
+      "*.xz"
+    ],
+    "verdict": "CAUTION",
+    "confidence": "MEDIUM",
+    "whatItIs": "A compressed archive: several files packed into one.",
+    "createdBy": "You, or someone who sent or published it",
+    "consequenceIfDeleted": "You lose everything packed inside unless it exists elsewhere. Check what is in it before deleting."
+  },
+  {
+    "id": "type-vdisk",
+    "patterns": [
+      "*.vhd",
+      "*.vhdx",
+      "*.vmdk",
+      "*.vdi",
+      "*.qcow2"
+    ],
+    "verdict": "CAUTION",
+    "confidence": "HIGH",
+    "whatItIs": "A virtual hard disk: the whole disk of a virtual machine in one file.",
+    "createdBy": "A virtual machine program (Hyper-V, VirtualBox, VMware, WSL)",
+    "consequenceIfDeleted": "You lose that virtual machine and everything stored inside it."
+  },
+  {
+    "id": "type-outlook-data",
+    "patterns": [
+      "*.pst"
+    ],
+    "verdict": "CAUTION",
+    "confidence": "HIGH",
+    "whatItIs": "An Outlook data file. It can hold your emails, contacts and calendar.",
+    "createdBy": "Microsoft Outlook",
+    "consequenceIfDeleted": "You can lose emails, contacts and calendar entries that are not stored anywhere else."
+  },
+  {
+    "id": "type-outlook-cache",
+    "patterns": [
+      "*.ost"
+    ],
+    "verdict": "REBUILDS_AUTOMATICALLY",
+    "confidence": "MEDIUM",
+    "whatItIs": "An Outlook offline cache of a mailbox that lives on a server.",
+    "createdBy": "Microsoft Outlook",
+    "consequenceIfDeleted": "Outlook downloads it again from the server, which can take a while for a big mailbox. Anything not yet synced is lost."
+  },
+  {
+    "id": "type-database",
+    "patterns": [
+      "*.db",
+      "*.sqlite",
+      "*.sqlite3",
+      "*.mdb",
+      "*.accdb",
+      "*.sdf"
+    ],
+    "verdict": "CAUTION",
+    "confidence": "MEDIUM",
+    "whatItIs": "A database file. Programs keep their saved data in files like this.",
+    "createdBy": "The program that owns it",
+    "consequenceIfDeleted": "The program can lose its saved data or stop working. Which one depends on where the file lives."
+  },
+  {
+    "id": "type-settings",
+    "patterns": [
+      "*.json",
+      "*.xml",
+      "*.ini",
+      "*.cfg",
+      "*.conf",
+      "*.config",
+      "*.yaml",
+      "*.yml",
+      "*.toml"
+    ],
+    "verdict": "CAUTION",
+    "confidence": "MEDIUM",
+    "whatItIs": "A settings or data file that a program reads.",
+    "createdBy": "The program that owns it",
+    "consequenceIfDeleted": "The program may reset its settings or fail to start."
+  },
+  {
+    "id": "type-credentials",
+    "patterns": [
+      "*.pem",
+      "*.key",
+      "*.pfx",
+      "*.p12",
+      "*.kdbx",
+      "*.ppk"
+    ],
+    "verdict": "DONT_TOUCH",
+    "confidence": "HIGH",
+    "whatItIs": "A key, certificate or password vault. It proves who you are, or stores your passwords.",
+    "createdBy": "You, a service or a password manager",
+    "consequenceIfDeleted": "You can permanently lose access to accounts or secrets. Many of these cannot be recreated."
+  },
+  {
+    "id": "type-document",
+    "patterns": [
+      "*.doc",
+      "*.docx",
+      "*.xls",
+      "*.xlsx",
+      "*.ppt",
+      "*.pptx",
+      "*.pdf",
+      "*.odt",
+      "*.ods",
+      "*.rtf",
+      "*.txt",
+      "*.md",
+      "*.csv"
+    ],
+    "verdict": "CAUTION",
+    "confidence": "HIGH",
+    "whatItIs": "A document: text, a spreadsheet, a presentation or a PDF.",
+    "createdBy": "You, or someone who sent it to you",
+    "consequenceIfDeleted": "You permanently lose it unless you have a copy. If your cloud storage syncs this folder, the deletion spreads there too."
+  },
+  {
+    "id": "type-image",
+    "patterns": [
+      "*.jpg",
+      "*.jpeg",
+      "*.png",
+      "*.gif",
+      "*.bmp",
+      "*.tif",
+      "*.tiff",
+      "*.webp",
+      "*.heic",
+      "*.cr2",
+      "*.nef",
+      "*.arw",
+      "*.dng",
+      "*.psd",
+      "*.raw"
+    ],
+    "verdict": "CAUTION",
+    "confidence": "HIGH",
+    "whatItIs": "A picture or photo.",
+    "createdBy": "You, a camera, or a program that saved it",
+    "consequenceIfDeleted": "You permanently lose it unless you have a copy. Photos are often irreplaceable."
+  },
+  {
+    "id": "type-video",
+    "patterns": [
+      "*.mp4",
+      "*.mkv",
+      "*.mov",
+      "*.avi",
+      "*.wmv",
+      "*.webm",
+      "*.flv",
+      "*.m4v",
+      "*.mts"
+    ],
+    "verdict": "CAUTION",
+    "confidence": "HIGH",
+    "whatItIs": "A video.",
+    "createdBy": "You, a camera, or something you downloaded or recorded",
+    "consequenceIfDeleted": "You permanently lose it unless you have a copy. Videos are usually the biggest files on a PC, so check it first."
+  },
+  {
+    "id": "type-audio",
+    "patterns": [
+      "*.mp3",
+      "*.flac",
+      "*.wav",
+      "*.m4a",
+      "*.aac",
+      "*.ogg",
+      "*.wma",
+      "*.opus"
+    ],
+    "verdict": "CAUTION",
+    "confidence": "HIGH",
+    "whatItIs": "An audio file: music, a recording or a sound.",
+    "createdBy": "You, or something you downloaded or recorded",
+    "consequenceIfDeleted": "You permanently lose it unless you have a copy."
+  },
+  {
+    "id": "type-code",
+    "patterns": [
+      "*.py",
+      "*.js",
+      "*.ts",
+      "*.tsx",
+      "*.jsx",
+      "*.cs",
+      "*.java",
+      "*.cpp",
+      "*.c",
+      "*.h",
+      "*.go",
+      "*.rs",
+      "*.rb",
+      "*.php",
+      "*.sql",
+      "*.sh"
+    ],
+    "verdict": "CAUTION",
+    "confidence": "HIGH",
+    "whatItIs": "Source code or a script.",
+    "createdBy": "You or a software project",
+    "consequenceIfDeleted": "You lose that code unless it is in version control (such as Git) or backed up."
+  }
+]

@@ -52,3 +52,27 @@ export function buildPayload(meta: FolderMetadata, usernames: string[]): AiPaylo
     sampleFileNames: meta.sampleFileNames.map(r)
   }
 }
+
+/** Exactly what is sent to the AI for a single file. No contents, ever: just where it is and what it is called. */
+export interface AiFilePayload {
+  kind: 'file'
+  path: string
+  fileName: string
+  extension: string
+  sizeBytes: number
+  createdAt: string | null
+  modifiedAt: string | null
+}
+
+export function buildFilePayload(meta: FolderMetadata, usernames: string[]): AiFilePayload {
+  const r = (s: string): string => redactUser(s, usernames)
+  return {
+    kind: 'file',
+    path: r(meta.path),
+    fileName: r(meta.name),
+    extension: Object.keys(meta.extensionCounts)[0] ?? '(none)',
+    sizeBytes: meta.sizeBytes,
+    createdAt: meta.createdAt,
+    modifiedAt: meta.modifiedAt
+  }
+}

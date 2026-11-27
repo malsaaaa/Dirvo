@@ -1,9 +1,12 @@
 import { promises as fsp, type Dirent, type Stats } from 'node:fs'
 import { basename, join, parse } from 'node:path'
-import type { FolderMetadata, ScanProgress } from '../../shared/types'
+import type { FolderMetadata, LargeFile, ScanProgress } from '../../shared/types'
 
 export const MAX_SAMPLE_NAMES = 30
 export const MAX_EXTENSIONS = 50
+export const MAX_LARGEST_FILES = 5
+/** Files smaller than this are never listed as one of a folder's biggest. */
+export const LARGEST_FILE_MIN_BYTES = 1024 * 1024
 const STAT_BATCH = 64
 const PROGRESS_INTERVAL_MS = 100
 
@@ -30,6 +33,8 @@ export class ScanCancelledError extends Error {
     this.name = 'ScanCancelledError'
   }
 }
+
+const iso = (ms: number): string | null => (Number.isFinite(ms) ? new Date(ms).toISOString() : null)
 
 export function extOf(fileName: string): string {
   const dot = fileName.lastIndexOf('.')
@@ -61,6 +66,8 @@ export async function scanFolder(root: string, options: ScanOptions = {}): Promi
   let newest = -Infinity
   const extCounts = new Map<string, number>()
   const samples: string[] = []
+  // Kept sorted, biggest first, never longer than MAX_LARGEST_FILES.
+  const largest: LargeFile[] = []
 
   let lastProgress = 0
   const reportProgress = (currentPath: string, force = false): void => {
@@ -115,6 +122,11 @@ export async function scanFolder(root: string, options: ScanOptions = {}): Promi
           const ext = extOf(f.name)
           extCounts.set(ext, (extCounts.get(ext) ?? 0) + 1)
           if (samples.length < MAX_SAMPLE_NAMES) samples.push(f.name)
+          if (st.size >= LARGEST_FILE_MIN_BYTES && (largest.length < MAX_LARGEST_FILES || st.size > largest[largest.length - 1].sizeBytes)) {
+            largest.push({ path: join(dir, f.name), sizeBytes: st.size, modifiedAt: iso(st.mtimeMs) })
+            largest.sort((a, b) => b.sizeBytes - a.sizeBytes)
+            if (largest.length > MAX_LARGEST_FILES) largest.pop()
+          }
         })
       }
       reportProgress(dir)
@@ -127,7 +139,6 @@ export async function scanFolder(root: string, options: ScanOptions = {}): Promi
   const extensionCounts = Object.fromEntries(
     [...extCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, MAX_EXTENSIONS)
   )
-  const iso = (ms: number): string | null => (Number.isFinite(ms) ? new Date(ms).toISOString() : null)
 
   return {
     path: root,
@@ -143,6 +154,7 @@ export async function scanFolder(root: string, options: ScanOptions = {}): Promi
     newestFileAt: iso(newest),
     sampleFileNames: samples,
     unreadableCount,
-    linksSkipped
+    linksSkipped,
+    ...(largest.length > 0 ? { largestFiles: largest } : {})
   }
 }

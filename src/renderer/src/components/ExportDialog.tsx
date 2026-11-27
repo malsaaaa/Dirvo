@@ -21,8 +21,8 @@ interface Props {
 }
 
 const FORMATS: Array<{ id: ReportFormat; title: string; help: string }> = [
-  { id: 'md', title: 'Markdown report', help: 'A readable summary with a detail section for each folder.' },
-  { id: 'csv', title: 'CSV spreadsheet', help: 'One row per folder, for Excel or Google Sheets.' }
+  { id: 'md', title: 'Markdown report', help: 'A readable summary with a detail section for each folder or file.' },
+  { id: 'csv', title: 'CSV spreadsheet', help: 'One row per folder or file, for Excel or Google Sheets.' }
 ]
 
 function Radio<T extends string>({
@@ -73,9 +73,9 @@ export default function ExportDialog({ totalCount, shownCount, busy, error, onCa
 
       {shownCount !== null && (
         <fieldset className="mt-5 flex flex-col gap-2">
-          <legend className="mb-2 text-sm font-medium text-ink-2">Folders</legend>
-          <Radio name="scope" value="shown" current={scope} onSelect={setScope} title={`The ${shownCount} folders shown`} help="Matches your current search and filter." />
-          <Radio name="scope" value="all" current={scope} onSelect={setScope} title={`All ${totalCount} folders`} />
+          <legend className="mb-2 text-sm font-medium text-ink-2">Include</legend>
+          <Radio name="scope" value="shown" current={scope} onSelect={setScope} title={`The ${shownCount} shown`} help="Matches your current search and filter." />
+          <Radio name="scope" value="all" current={scope} onSelect={setScope} title={`All ${totalCount}`} />
         </fieldset>
       )}
 
@@ -87,7 +87,7 @@ export default function ExportDialog({ totalCount, shownCount, busy, error, onCa
         </span>
       </label>
 
-      <p className="mt-5 text-xs text-ink-3">The report lists folder names, paths, sizes and dates. It never includes file contents.</p>
+      <p className="mt-5 text-xs text-ink-3">The report lists names, paths, sizes and dates. It never includes file contents.</p>
 
       {error && (
         <p role="alert" className="mt-4 rounded-lg bg-bad-bg px-4 py-3 text-sm text-bad-ink">

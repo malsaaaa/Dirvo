@@ -148,7 +148,7 @@ export default function ScanDrive({
                 Finished scanning <span className="font-mono">{last.drive}</span>
               </p>
               <p className="mt-1 text-ink-2">
-                {formatCount(last.listed)} folders of {formatBytes(last.outcome.minBytes)} or more are listed.{' '}
+                {formatCount(last.listed)} folders and files of {formatBytes(last.outcome.minBytes)} or more are listed.{' '}
                 {last.outcome.hiddenSmall > 0 && `${formatCount(last.outcome.hiddenSmall)} smaller folders were left out. `}
                 {last.outcome.skipped > 0 &&
                   `${formatCount(last.outcome.skipped)} folders could not be read (permissions).`}
@@ -159,7 +159,7 @@ export default function ScanDrive({
               <p className="font-medium">
                 Scan of <span className="font-mono">{last.drive}</span> cancelled
               </p>
-              <p className="mt-1 text-ink-2">{formatCount(last.listed)} folders were listed before you stopped it.</p>
+              <p className="mt-1 text-ink-2">{formatCount(last.listed)} items were listed before you stopped it.</p>
             </>
           )}
           {last.listed > 0 && (

@@ -52,12 +52,12 @@ function validateHowToClean(raw: unknown, where: string): HowToClean {
 }
 
 /** Checks the raw JSON and returns typed entries. Throws a readable error on any problem. */
-export function validateDatabase(raw: unknown): KnownFolderEntry[] {
-  if (!Array.isArray(raw)) throw new Error('known-folders: expected an array')
+export function validateDatabase(raw: unknown, label = 'known-folders'): KnownFolderEntry[] {
+  if (!Array.isArray(raw)) throw new Error(`${label}: expected an array`)
   const ids = new Set<string>()
 
   return raw.map((item, i) => {
-    const where = `known-folders[${i}]`
+    const where = `${label}[${i}]`
     if (typeof item !== 'object' || item === null) throw new Error(`${where}: not an object`)
     const e = item as Record<string, unknown>
 

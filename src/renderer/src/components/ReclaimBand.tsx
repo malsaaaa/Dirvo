@@ -46,13 +46,13 @@ export default function ReclaimBand({ summary, note, change, span }: BandProps):
       </div>
       <p className="mt-2 text-sm text-ink-3">
         {reclaimableCount > 0
-          ? `In ${formatCount(reclaimableCount)} of ${formatCount(count)} folders rated Safe or Rebuilds. Check each one before you delete. `
-          : `None of the ${formatCount(count)} folders is rated Safe or Rebuilds. `}
+          ? `In ${formatCount(reclaimableCount)} of ${formatCount(count)} items rated Safe or Rebuilds. Check each one before you delete. `
+          : `None of the ${formatCount(count)} items is rated Safe or Rebuilds. `}
         {note}
       </p>
       {idleReclaimableBytes > 0 && (
         <p className="mt-1 text-sm text-ink-2">
-          <span className="font-mono tabular-nums">{formatBytes(idleReclaimableBytes)}</span> of it is in folders nothing has touched for over a
+          <span className="font-mono tabular-nums">{formatBytes(idleReclaimableBytes)}</span> of it is in items nothing has touched for over a
           year.
         </p>
       )}

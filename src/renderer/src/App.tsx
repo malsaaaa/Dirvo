@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FolderSearch, HardDrive, Rows3, Settings2, type LucideIcon } from 'lucide-react'
 import type { DriveScanItem, DriveScanOutcome, SavedScans } from '@shared/types'
+import type { FileActions } from './components/DetailCard'
 import Kbd from './components/Kbd'
 import Logo from './components/Logo'
 import ShortcutsDialog from './components/ShortcutsDialog'
@@ -10,6 +11,7 @@ import { BATCH_CONCURRENCY, MAX_BATCH, countUnknown, pickUnknown, runBatch, type
 import { recordScan, type History } from './lib/history'
 import { DEFAULT_VIEW, applyView, type LedgerView } from './lib/ledger-view'
 import { keyToAction, movedIndex, type ShortcutAction } from './lib/shortcuts'
+import { normPath } from './lib/tree'
 import { useScanner, type ScannedFolder } from './hooks/useScanner'
 import PickFolder from './screens/PickFolder'
 import Results from './screens/Results'
@@ -19,7 +21,7 @@ import Settings from './screens/Settings'
 type Screen = 'pick' | 'drive' | 'results' | 'settings'
 
 const NAV: Array<{ id: Screen; label: string; Icon: LucideIcon }> = [
-  { id: 'pick', label: 'Explain a folder', Icon: FolderSearch },
+  { id: 'pick', label: 'Folder or file', Icon: FolderSearch },
   { id: 'drive', label: 'Scan a drive', Icon: HardDrive },
   { id: 'results', label: 'Results', Icon: Rows3 },
   { id: 'settings', label: 'Settings', Icon: Settings2 }
@@ -224,6 +226,31 @@ export default function App(): React.JSX.Element {
     toastTimer.current = setTimeout(() => setToast(null), 2200)
   }
 
+  /** A rescan of one file is instant (one lookup), so it needs no progress. A folder is scanned in full. */
+  const rescanItem = (item: ScannedFolder): void => {
+    const path = item.metadata.path
+    if (item.metadata.kind !== 'file') {
+      void scanner.start(path)
+      return
+    }
+    window.dirvo
+      .inspectFile(path)
+      .then((r) => {
+        if (r.status === 'done') upsert({ metadata: r.result, explanation: r.explanation, aiStatus: 'none', scannedAt: new Date().toISOString() })
+        else flash(r.status === 'error' ? r.message : 'That is a folder now')
+      })
+      .catch(() => flash('Could not look at that file'))
+  }
+
+  const fileActions: FileActions = {
+    explain: (path) => {
+      if (folderBusy || driveBusy) flash('Another scan is running')
+      else void scanner.explainFile(path)
+    },
+    isListed: (path) => items.some((i) => normPath(i.metadata.path) === normPath(path)),
+    select: (path) => setSelectedPath(items.find((i) => normPath(i.metadata.path) === normPath(path))?.metadata.path ?? null)
+  }
+
   const runShortcut = (action: ShortcutAction): void => {
     switch (action.type) {
       case 'screen':
@@ -266,14 +293,15 @@ export default function App(): React.JSX.Element {
           void window.dirvo.copyPath(m.path).then(() => flash('Path copied'))
         } else if (action.do === 'rescan') {
           if (breakdown.busy) flash('Another scan is running')
-          else void scanner.start(m.path)
+          else rescanItem(item)
         } else if (action.do === 'lookInside') {
-          if (m.dirCount === 0) flash('There are no folders inside this one')
+          if (m.kind === 'file') flash('A file has nothing inside it')
+          else if (m.dirCount === 0) flash('There are no folders inside this one')
           else if (item.lookedInside) flash('Already looked inside this folder')
           else if (breakdown.busy) flash('Another scan is running')
           else breakdown.start(m.path, m.sizeBytes)
         } else if (action.do === 'explainAi') {
-          if (item.explanation) flash('Dirvo already knows this folder')
+          if (item.explanation) flash('Dirvo already knows this one')
           else if (item.aiStatus !== 'loading') void runAi(m.path)
         }
         return
@@ -388,6 +416,8 @@ export default function App(): React.JSX.Element {
             scanner={scanner.state}
             blocked={driveBusy}
             onScan={(p) => void scanner.start(p)}
+            onFile={(p) => void scanner.explainFile(p)}
+            onExplainPath={(p) => void scanner.explainPath(p)}
             onCancel={scanner.cancel}
             onDismissError={scanner.clearError}
           />
@@ -416,7 +446,11 @@ export default function App(): React.JSX.Element {
             onRetryAi={(p) => void runAi(p)}
             onOpenSettings={() => setScreen('settings')}
             breakdown={breakdown}
-            onRescan={(p) => void scanner.start(p)}
+            onRescan={(p) => {
+              const found = items.find((i) => i.metadata.path === p)
+              if (found) rescanItem(found)
+            }}
+            files={fileActions}
             batch={batch}
             exportOpen={exportOpen}
             onExportOpenChange={setExportOpen}
@@ -425,7 +459,7 @@ export default function App(): React.JSX.Element {
             onViewChange={setView}
             note={
               lastDrive?.outcome.status === 'done'
-                ? `Drive ${lastDrive.drive} · folders of ${Math.round(lastDrive.outcome.minBytes / 1048576)} MB or more`
+                ? `Drive ${lastDrive.drive} · folders and files of ${Math.round(lastDrive.outcome.minBytes / 1048576)} MB or more`
                 : null
             }
           />

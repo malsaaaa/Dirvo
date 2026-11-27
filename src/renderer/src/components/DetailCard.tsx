@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import type { FolderExplanation, LargeFile } from '@shared/types'
 import type { BreakdownControls } from '../hooks/useDriveScan'
 import type { ScannedFolder } from '../hooks/useScanner'
 import { formatBytes, formatCount, formatDate, formatDateTime, formatDelta } from '../lib/format'
@@ -7,6 +8,7 @@ import { deltaOf } from '../lib/history'
 import { normPath } from '../lib/tree'
 import { VERDICT_STYLE } from '../lib/verdict'
 import Button from './Button'
+import VerdictBadge from './VerdictBadge'
 
 const SOURCE_LABEL = {
   system: 'System rule',
@@ -24,32 +26,49 @@ function Row({ label, children, mono = false }: { label: string; children: React
   )
 }
 
+/** What the card can do with the files inside a folder. */
+export interface FileActions {
+  /** Add one file to the results and explain it. */
+  explain: (path: string) => void
+  /** The file is already in the results. */
+  isListed: (path: string) => boolean
+  /** Select a file that is already in the results. */
+  select: (path: string) => void
+}
+
 interface Props {
   item: ScannedFolder
   onRetryAi: () => void
   onOpenSettings: () => void
   breakdown: BreakdownControls
   onRescan: () => void
+  files: FileActions
 }
 
 const PANEL = 'rounded-lg border p-4 text-sm'
 
 function UnknownPanel({ item, onRetryAi, onOpenSettings }: Pick<Props, 'item' | 'onRetryAi' | 'onOpenSettings'>): React.JSX.Element {
+  const isFile = item.metadata.kind === 'file'
+  const noun = isFile ? 'file' : 'folder'
   if (item.aiStatus === 'loading') {
     return (
       <div className={`${PANEL} border-line bg-hover`} aria-live="polite">
-        <p className="font-medium">Asking the AI about this folder…</p>
-        <p className="mt-1 text-ink-2">Only its name, size, counts and a few file names are sent. Never file contents.</p>
+        <p className="font-medium">Asking the AI about this {noun}…</p>
+        <p className="mt-1 text-ink-2">
+          {isFile
+            ? 'Only its name, location, size and dates are sent. Never what is inside the file.'
+            : 'Only its name, size, counts and a few file names are sent. Never file contents.'}
+        </p>
       </div>
     )
   }
   if (item.aiStatus === 'no-key') {
     return (
       <div className={`${PANEL} border-line bg-hover`}>
-        <p className="font-medium">Dirvo doesn&apos;t recognise this folder</p>
+        <p className="font-medium">Dirvo doesn&apos;t recognise this {noun}</p>
         <p className="mt-1 text-ink-2">
-          Add an API key for an AI provider in Settings and Dirvo can ask it to explain this folder. Until then, treat it
-          as important and check the file names below for clues.
+          Add an API key for an AI provider in Settings and Dirvo can ask it to explain this {noun}. Until then, treat it
+          as important{isFile ? '' : ' and check the file names below for clues'}.
         </p>
         <Button variant="primary" onClick={onOpenSettings} className="mt-4">
           Open Settings
@@ -73,7 +92,7 @@ function UnknownPanel({ item, onRetryAi, onOpenSettings }: Pick<Props, 'item' | 
   }
   return (
     <div className={`${PANEL} border-line bg-hover`}>
-      <p className="font-medium">Dirvo doesn&apos;t recognise this folder</p>
+      <p className="font-medium">Dirvo doesn&apos;t recognise this {noun}</p>
       <p className="mt-1 text-ink-2">Treat it as important until you know what created it, or ask the AI to take a look.</p>
       <Button variant="primary" onClick={onRetryAi} className="mt-4">
         Explain with AI
@@ -110,8 +129,8 @@ function InsideRow({ item, breakdown }: { item: ScannedFolder; breakdown: Breakd
       <div>
         <p>
           {inside.listed > 0
-            ? `${formatCount(inside.listed)} folder${inside.listed === 1 ? '' : 's'} listed under it in the results`
-            : 'No folder inside is big enough to list'}
+            ? `${formatCount(inside.listed)} item${inside.listed === 1 ? '' : 's'} listed under it in the results`
+            : 'Nothing inside is big enough to list'}
         </p>
         {(inside.hiddenSmall > 0 || inside.skipped > 0) && (
           <p className="mt-1 text-xs text-ink-3">
@@ -136,7 +155,57 @@ function InsideRow({ item, breakdown }: { item: ScannedFolder; breakdown: Breakd
   )
 }
 
-export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown, onRescan }: Props): React.JSX.Element {
+/** The file's path below the folder, so the list shows where each one sits. */
+function relativeTo(folder: string, file: string): string {
+  const base = folder.replace(/[\\/]+$/, '')
+  return normPath(file).startsWith(normPath(base) + '\\') ? file.slice(base.length + 1) : file
+}
+
+/**
+ * The biggest single files inside a folder, noted during the scan. Each shows Dirvo's offline ruling, and
+ * can be added to the results to get the full explanation (or an AI estimate if Dirvo does not know it).
+ */
+function LargestFiles({ folder, files, actions }: { folder: string; files: LargeFile[]; actions: FileActions }): React.JSX.Element {
+  const [rulings, setRulings] = useState<Array<FolderExplanation | null> | null>(null)
+  useEffect(() => {
+    let off = false
+    window.dirvo
+      .explainFiles(files.map((f) => f.path))
+      .then((r) => {
+        if (!off) setRulings(r)
+      })
+      .catch(() => undefined)
+    return () => {
+      off = true
+    }
+  }, [files])
+
+  return (
+    <ul className="flex flex-col divide-y divide-line">
+      {files.map((f, i) => {
+        const listed = actions.isListed(f.path)
+        return (
+          <li key={f.path} className="py-2.5 first:pt-0 last:pb-0">
+            <div className="flex items-center justify-between gap-3">
+              <span className="min-w-0 truncate text-sm" title={f.path}>
+                {relativeTo(folder, f.path)}
+              </span>
+              <span className="shrink-0 font-mono text-xs tabular-nums text-ink-2">{formatBytes(f.sizeBytes)}</span>
+            </div>
+            <div className="mt-1.5 flex items-center justify-between gap-3">
+              {rulings ? <VerdictBadge verdict={rulings[i]?.verdict ?? null} short /> : <span />}
+              <Button className="h-7 px-2.5 text-xs" onClick={() => (listed ? actions.select(f.path) : actions.explain(f.path))}>
+                {listed ? 'Show' : 'Explain'}
+              </Button>
+            </div>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown, onRescan, files }: Props): React.JSX.Element {
   const { metadata: m, explanation: e } = item
   const [feedback, setFeedback] = useState('')
 
@@ -156,7 +225,9 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown,
     flash('Command copied. Paste it into a terminal to run it')
   }
 
+  const isFile = m.kind === 'file'
   const topTypes = Object.entries(m.extensionCounts).slice(0, 8)
+  const fileType = Object.keys(m.extensionCounts)[0]
   const delta = deltaOf(item)
   const idle = idleLabel(idleDays(item))
 
@@ -229,9 +300,14 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown,
             )}
           </>
         )}
-        {m.dirCount > 0 && (
+        {!isFile && m.dirCount > 0 && (
           <Row label="Inside">
             <InsideRow item={item} breakdown={breakdown} />
+          </Row>
+        )}
+        {!isFile && m.largestFiles && m.largestFiles.length > 0 && (
+          <Row label="Biggest files">
+            <LargestFiles folder={m.path} files={m.largestFiles} actions={files} />
           </Row>
         )}
         <Row label="Size" mono>
@@ -242,17 +318,23 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown,
             </span>
           )}
         </Row>
-        <Row label="Contents" mono>
-          {formatCount(m.fileCount)} files · {formatCount(m.dirCount)} folders
-        </Row>
+        {isFile ? (
+          <Row label="Type" mono>
+            {fileType && fileType !== '(none)' ? fileType : 'No extension'}
+          </Row>
+        ) : (
+          <Row label="Contents" mono>
+            {formatCount(m.fileCount)} files · {formatCount(m.dirCount)} folders
+          </Row>
+        )}
         <Row label="Scanned">{formatDateTime(item.scannedAt)}</Row>
         <Row label="Created">{formatDate(m.createdAt)}</Row>
         <Row label="Changed">
           {formatDate(m.modifiedAt)}
-          <span className="text-ink-3"> · newest file {formatDate(m.newestFileAt)}</span>
+          {!isFile && <span className="text-ink-3"> · newest file {formatDate(m.newestFileAt)}</span>}
         </Row>
-        {idle && <Row label="Idle">Nothing in it has changed for {idle.long}</Row>}
-        {topTypes.length > 0 && (
+        {idle && <Row label="Idle">{isFile ? 'Not changed for' : 'Nothing in it has changed for'} {idle.long}</Row>}
+        {!isFile && topTypes.length > 0 && (
           <Row label="File types" mono>
             <span className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-2">
               {topTypes.map(([ext, count]) => (
@@ -280,7 +362,7 @@ export default function DetailCard({ item, onRetryAi, onOpenSettings, breakdown,
         </p>
       )}
 
-      {m.sampleFileNames.length > 0 && (
+      {!isFile && m.sampleFileNames.length > 0 && (
         <details className="text-sm">
           <summary className="cursor-pointer select-none text-ink-2 hover:text-ink">
             Sample file names <span className="font-mono text-xs tabular-nums text-ink-3">{m.sampleFileNames.length}</span>

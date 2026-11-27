@@ -38,7 +38,7 @@ export default function ExplainAllDialog({ count, unknownCount, onConfirm, onCan
   return (
     <Modal titleId="explain-all-title" onClose={onCancel}>
       <h2 id="explain-all-title" className="text-xl font-medium">
-        Explain unknown folders
+        Explain unknown folders and files
       </h2>
 
       {!cfg || !provider ? (
@@ -59,14 +59,14 @@ export default function ExplainAllDialog({ count, unknownCount, onConfirm, onCan
         <>
           <p className="mt-3 text-sm text-ink-2">
             Dirvo will ask <span className="font-medium text-ink">{provider.label}</span> to explain{' '}
-            <span className="font-mono tabular-nums text-ink">{count}</span> folder{count === 1 ? '' : 's'}, largest first.
+            <span className="font-mono tabular-nums text-ink">{count}</span> item{count === 1 ? '' : 's'}, largest first.
             {unknownCount > count && ` There are ${unknownCount} in all. Run it again for the rest.`}
           </p>
 
           <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-ink-2">
             <li>
-              For each folder it sends the name and path (your Windows username hidden), size, counts, dates and up to 30 sample
-              file names. Never file contents.
+              For a folder it sends the name and path (your Windows username hidden), size, counts, dates and up to 30 sample
+              file names. For a file it sends the name, path, size and dates. Never file contents.
             </li>
             <li>
               {local ? (
@@ -86,7 +86,7 @@ export default function ExplainAllDialog({ count, unknownCount, onConfirm, onCan
           <div className="mt-6 flex justify-end gap-2">
             <Button onClick={onCancel}>Cancel</Button>
             <Button variant="primary" onClick={onConfirm}>
-              Explain {count} folder{count === 1 ? '' : 's'}
+              Explain {count} item{count === 1 ? '' : 's'}
             </Button>
           </div>
         </>

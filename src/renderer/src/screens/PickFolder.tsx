@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FolderOpen } from 'lucide-react'
+import { File, FolderOpen } from 'lucide-react'
 import Button, { INPUT_CLASS } from '../components/Button'
 import ScanStatus from '../components/ScanStatus'
 import type { ScannerState } from '../hooks/useScanner'
@@ -9,14 +9,19 @@ interface Props {
   scanner: ScannerState
   /** A drive scan or "look inside" is running, so folder scans wait. */
   blocked: boolean
+  /** A folder was chosen: scan it. */
   onScan: (path: string) => void
+  /** A file was chosen in the file picker. */
+  onFile: (path: string) => void
+  /** A path was typed: it may be a file or a folder. */
+  onExplainPath: (path: string) => void
   onCancel: () => void
   onDismissError: () => void
 }
 
 const RULINGS = ['SAFE', 'REBUILDS_AUTOMATICALLY', 'CAUTION', 'DONT_TOUCH'] as const
 
-export default function PickFolder({ scanner, blocked, onScan, onCancel, onDismissError }: Props): React.JSX.Element {
+export default function PickFolder({ scanner, blocked, onScan, onFile, onExplainPath, onCancel, onDismissError }: Props): React.JSX.Element {
   const [typed, setTyped] = useState('')
   const busy = scanner.status === 'scanning' || blocked
   // Accept C:\ style paths only; the main process validates again.
@@ -27,13 +32,18 @@ export default function PickFolder({ scanner, blocked, onScan, onCancel, onDismi
     if (picked) onScan(picked)
   }
 
+  const browseFile = async (): Promise<void> => {
+    const picked = await window.dirvo.pickFile()
+    if (picked) onFile(picked)
+  }
+
   return (
     <div className="flex max-w-2xl flex-col gap-8 p-8">
       <header>
-        <h1 className="text-3xl font-medium">Explain a folder</h1>
+        <h1 className="text-3xl font-medium">Explain a folder or file</h1>
         <p className="mt-2 text-ink-2">
-          Point Dirvo at a folder you don&apos;t recognise. It reads only names, sizes and dates, never what is inside
-          your files, and gives a ruling: what it is, who made it, and whether you can delete it.
+          Point Dirvo at a folder or a file you don&apos;t recognise. It reads only names, sizes and dates, never what
+          is inside your files, and gives a ruling: what it is, who made it, and whether you can delete it.
         </p>
       </header>
 
@@ -41,11 +51,11 @@ export default function PickFolder({ scanner, blocked, onScan, onCancel, onDismi
         className="flex flex-col gap-2"
         onSubmit={(ev) => {
           ev.preventDefault()
-          if (typedOk && !busy) onScan(typed.trim())
+          if (typedOk && !busy) onExplainPath(typed.trim())
         }}
       >
         <label htmlFor="folder-path" className="text-sm font-medium text-ink-2">
-          Folder path
+          Folder or file path
         </label>
         <div className="flex gap-2">
           <input
@@ -59,7 +69,11 @@ export default function PickFolder({ scanner, blocked, onScan, onCancel, onDismi
           />
           <Button type="button" className="h-11" onClick={() => void browse()} disabled={busy}>
             <FolderOpen size={16} strokeWidth={1.5} aria-hidden />
-            Browse
+            Browse folder
+          </Button>
+          <Button type="button" className="h-11" onClick={() => void browseFile()} disabled={busy}>
+            <File size={16} strokeWidth={1.5} aria-hidden />
+            Browse file
           </Button>
           <Button type="submit" variant="primary" className="h-11" disabled={!typedOk || busy}>
             Explain
@@ -67,7 +81,7 @@ export default function PickFolder({ scanner, blocked, onScan, onCancel, onDismi
         </div>
       </form>
 
-      {blocked && <p className="text-sm text-ink-2">Another scan is running. Folder scans are available when it finishes.</p>}
+      {blocked && <p className="text-sm text-ink-2">Another scan is running. Folders and files can be explained when it finishes.</p>}
 
       <ScanStatus state={scanner} onCancel={onCancel} onDismissError={onDismissError} />
 

@@ -12,6 +12,10 @@ export type ScannerState =
 export function useScanner(onDone: (item: ScannedFolder) => void): {
   state: ScannerState
   start: (path: string) => Promise<void>
+  /** For a path that may be a file or a folder: a file is looked at straight away, a folder is scanned. */
+  explainPath: (path: string) => Promise<void>
+  /** Looks at one file and reports it like a finished scan. */
+  explainFile: (path: string) => Promise<void>
   cancel: () => void
   clearError: () => void
 } {
@@ -52,11 +56,43 @@ export function useScanner(onDone: (item: ScannedFolder) => void): {
     }
   }, [])
 
+  const explainFile = useCallback(async (path: string) => {
+    if (scanId.current) return
+    try {
+      const r = await window.dirvo.inspectFile(path)
+      if (r.status === 'done') {
+        onDoneRef.current({ metadata: r.result, explanation: r.explanation, aiStatus: 'none', scannedAt: new Date().toISOString() })
+      } else if (r.status === 'error') {
+        setState({ status: 'error', message: r.message })
+      } else {
+        setState({ status: 'error', message: 'That is a folder, not a file' })
+      }
+    } catch (err) {
+      setState({ status: 'error', message: err instanceof Error ? err.message : 'Something went wrong' })
+    }
+  }, [])
+
+  const explainPath = useCallback(
+    async (path: string) => {
+      if (scanId.current) return
+      try {
+        const r = await window.dirvo.inspectFile(path)
+        if (r.status === 'folder') await start(path)
+        else if (r.status === 'done') {
+          onDoneRef.current({ metadata: r.result, explanation: r.explanation, aiStatus: 'none', scannedAt: new Date().toISOString() })
+        } else setState({ status: 'error', message: r.message })
+      } catch (err) {
+        setState({ status: 'error', message: err instanceof Error ? err.message : 'Something went wrong' })
+      }
+    },
+    [start]
+  )
+
   const cancel = useCallback(() => {
     if (scanId.current) void window.dirvo.cancelScan(scanId.current)
   }, [])
 
   const clearError = useCallback(() => setState({ status: 'idle' }), [])
 
-  return { state, start, cancel, clearError }
+  return { state, start, explainPath, explainFile, cancel, clearError }
 }

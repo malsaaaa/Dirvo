@@ -13,7 +13,10 @@ import workerPath from './scanner/worker?modulePath'
 import appIcon from '../../resources/icon.ico?asset'
 import { startScan } from './scanner/scanner'
 import { scanDrive } from './scanner/drive-scan'
+import { createLockedStat } from './scanner/locked-files'
+import { inspectFile, listBigFiles } from './scanner/scan-file'
 import { explainPath } from './knowledge/explain'
+import { explainFilePath } from './knowledge/explain-file'
 import { isContainerFolder } from './knowledge/system-paths'
 import { isAllowedCleanCommand, isSettingsTarget, SETTINGS_URIS } from './knowledge/clean-commands'
 import { isProviderId, type ProviderId } from '../shared/providers'
@@ -24,10 +27,14 @@ import type {
   DriveInfo,
   DriveScanEvent,
   DriveScanOutcome,
+  FileInspectOutcome,
   FolderExplanation,
   ReportResult,
   ScanOutcome
 } from '../shared/types'
+
+/** Reads the size of the few files Windows keeps locked (pagefile.sys and friends) from the folder listing. */
+const lockedStat = createLockedStat()
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -90,6 +97,8 @@ async function runBreakdownScan(
     {
       isContainer,
       explain: explainPath,
+      listBigFiles: (path, min) => listBigFiles(path, min, undefined, lockedStat),
+      explainFile: explainFilePath,
       scanFolder: (path, onProgress) => startScan(workerPath, path, onProgress),
       listChildDirs: async (path) => {
         const entries = await fsp.readdir(path, { withFileTypes: true })
@@ -141,6 +150,30 @@ function registerIpc(): void {
     const options = { title: 'Choose a folder to explain', properties: ['openDirectory' as const] }
     const result = win ? await dialog.showOpenDialog(win, options) : await dialog.showOpenDialog(options)
     return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle('dialog:pickFile', async (e): Promise<string | null> => {
+    const win = BrowserWindow.fromWebContents(e.sender)
+    const options = { title: 'Choose a file to explain', properties: ['openFile' as const] }
+    const result = win ? await dialog.showOpenDialog(win, options) : await dialog.showOpenDialog(options)
+    return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0]
+  })
+
+  // One file: size and dates only (lstat), never its contents. A path that is a folder is reported as one.
+  ipcMain.handle('file:inspect', async (_e, path: unknown): Promise<FileInspectOutcome> => {
+    if (typeof path !== 'string' || !isAbsolute(path)) return { status: 'error', message: 'Please choose a full file path' }
+    const file = normalize(path)
+    const r = await inspectFile(file, undefined, lockedStat)
+    if (r.status === 'file') return { status: 'done', result: r.metadata, explanation: explainFilePath(file) }
+    return r
+  })
+
+  ipcMain.handle('file:explainMany', (_e, paths: unknown): Array<FolderExplanation | null> => {
+    if (!Array.isArray(paths) || paths.length > 20) throw new Error('Invalid paths')
+    return paths.map((p) => {
+      if (typeof p !== 'string' || !isAbsolute(p)) throw new Error('Invalid path')
+      return explainFilePath(p)
+    })
   })
 
   ipcMain.handle('drive:scan', async (e, scanId: unknown, root: unknown): Promise<DriveScanOutcome> => {
@@ -213,7 +246,9 @@ function registerIpc(): void {
   // --- AI fallback and settings. The API key only ever lives in this process. ---
   const userData = app.getPath('userData')
   // Results and size history, kept on this PC between sessions. Nothing is uploaded.
-  savedScans = new SavedScansStore(join(userData, 'saved-scans.json'), explainPath)
+  savedScans = new SavedScansStore(join(userData, 'saved-scans.json'), (path, kind) =>
+    kind === 'file' ? explainFilePath(path) : explainPath(path)
+  )
   const scansStore = savedScans
   ipcMain.handle('scans:load', () => scansStore.load())
   ipcMain.handle('scans:save', (_e, saved: unknown) => scansStore.save(saved))

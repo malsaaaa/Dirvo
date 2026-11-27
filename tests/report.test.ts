@@ -139,7 +139,7 @@ describe('CSV report', () => {
 
   it('has a header and one row per folder, ending with a line break', () => {
     expect(lines).toHaveLength(4)
-    expect(lines[0].startsWith('Folder,Path,Size (bytes),Size,Ruling')).toBe(true)
+    expect(lines[0].startsWith('Name,Type,Path,Size (bytes),Size,Ruling')).toBe(true)
     expect(csv.endsWith('\r\n')).toBe(true)
   })
 

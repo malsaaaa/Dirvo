@@ -3,6 +3,7 @@ import type {
   DriveScanOutcome,
   DriveScanProgress,
   FolderExplanation,
+  FolderMetadata,
   ScanOutcome,
   ScanProgress
 } from '../../shared/types'
@@ -17,6 +18,13 @@ export interface DriveScanDeps {
   /** Starts a metadata scan of one folder in its own worker. */
   scanFolder: (path: string, onProgress: (p: ScanProgress) => void) => { promise: Promise<ScanOutcome>; cancel: () => void }
   explain: (path: string) => FolderExplanation | null
+  /**
+   * Files directly inside a folder that are `minBytes` or bigger, described like folders. Optional:
+   * without it only folders are listed. Must not include links. Throws if the folder is unreadable.
+   */
+  listBigFiles?: (path: string, minBytes: number) => Promise<FolderMetadata[]>
+  /** Offline answer for a file. Used with listBigFiles. */
+  explainFile?: (path: string) => FolderExplanation | null
   /** Folders that mostly hold other folders (drive root, Windows, Users, AppData, ...): look inside them. */
   isContainer: (path: string) => boolean
 }
@@ -44,7 +52,8 @@ export interface DriveScanHandle {
  * Container folders (the drive root, Windows, Users, a profile, AppData, ...) are not scanned as one
  * lump. Their subfolders are scanned instead, so the results show where the space really is.
  * Everything else is scanned whole. Files sitting directly inside container folders (pagefile.sys,
- * for example) are not listed. Folders under `minBytes` are counted, not listed.
+ * for example) are listed when they are `minBytes` or bigger, so the biggest single files do not hide.
+ * Folders under `minBytes` are counted, not listed.
  */
 export function scanDrive(
   root: string,
@@ -82,6 +91,17 @@ export function scanDrive(
         queue.push(...children)
       } catch {
         skipped++
+      }
+      if (deps.listBigFiles) {
+        try {
+          for (const file of await deps.listBigFiles(path, minBytes)) {
+            if (cancelled) break
+            doneBytes += file.sizeBytes
+            callbacks.onItem({ metadata: file, explanation: deps.explainFile?.(file.path) ?? null })
+          }
+        } catch {
+          // Files that cannot be listed are skipped; the folders were still opened.
+        }
       }
       return
     }

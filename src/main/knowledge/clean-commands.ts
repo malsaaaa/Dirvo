@@ -18,7 +18,9 @@ export const ALLOWED_CLEAN_COMMANDS: readonly string[] = [
   'docker system prune',
   'huggingface-cli delete-cache',
   'ollama list',
-  'DISM /Online /Cleanup-Image /StartComponentCleanup'
+  'DISM /Online /Cleanup-Image /StartComponentCleanup',
+  // Turns hibernation off, which deletes hiberfil.sys. Windows' own tool, undone with "powercfg /hibernate on".
+  'powercfg /hibernate off'
 ]
 
 export function isAllowedCleanCommand(command: unknown): command is string {

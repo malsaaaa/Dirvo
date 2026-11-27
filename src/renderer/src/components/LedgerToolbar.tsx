@@ -35,7 +35,7 @@ export default function LedgerToolbar({ view, onChange, counts, idleCount, input
               }
             }}
             placeholder="Search name, path or maker"
-            aria-label="Search folders"
+            aria-label="Search folders and files"
             spellCheck={false}
             autoComplete="off"
             className={`${INPUT_CLASS} w-full pl-9 pr-9 [&::-webkit-search-cancel-button]:hidden`}
@@ -87,7 +87,7 @@ export default function LedgerToolbar({ view, onChange, counts, idleCount, input
           type="button"
           aria-pressed={view.idleOnly}
           onClick={() => onChange({ ...view, idleOnly: !view.idleOnly })}
-          title="Folders where nothing has changed for a year or more"
+          title="Folders and files where nothing has changed for a year or more"
           className={`ml-auto inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors duration-150 ease-out-soft ${
             view.idleOnly ? 'border-line-strong bg-raised text-ink' : 'border-transparent text-ink-2 hover:bg-hover hover:text-ink'
           }`}

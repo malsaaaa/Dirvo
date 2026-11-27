@@ -7,6 +7,9 @@ export const MAX_SAVED_ITEMS = 2000
 export const MAX_HISTORY_ENTRIES = 5000
 const MAX_TEXT = 600
 
+/** The offline answer for a path. `kind` tells a file from a folder (missing means a folder). */
+export type ExplainFn = (path: string, kind?: 'folder' | 'file') => FolderExplanation | null
+
 const VERDICTS: Verdict[] = ['SAFE', 'REBUILDS_AUTOMATICALLY', 'CAUTION', 'DONT_TOUCH']
 const CONFIDENCES: Confidence[] = ['LOW', 'MEDIUM', 'HIGH']
 
@@ -46,7 +49,7 @@ function aiExplanation(raw: unknown): FolderExplanation | null {
  * every field is validated and capped. Rulings from the database and system rules are NOT trusted from
  * the file: they are recomputed with `explain`, so an updated database improves old results.
  */
-export function validateSavedScans(raw: unknown, explain: (path: string) => FolderExplanation | null): SavedScans {
+export function validateSavedScans(raw: unknown, explain: ExplainFn): SavedScans {
   const out: SavedScans = { items: [], history: {} }
   if (!isObj(raw)) return out
 
@@ -71,7 +74,7 @@ export function validateSavedScans(raw: unknown, explain: (path: string) => Fold
 
       const item: ScannedFolder = {
         metadata,
-        explanation: explain(metadata.path) ?? aiExplanation(entry.explanation),
+        explanation: explain(metadata.path, metadata.kind ?? 'folder') ?? aiExplanation(entry.explanation),
         aiStatus: 'none',
         scannedAt: entry.scannedAt
       }
@@ -116,7 +119,7 @@ export class SavedScansStore {
 
   constructor(
     private readonly filePath: string,
-    private readonly explain: (path: string) => FolderExplanation | null
+    private readonly explain: ExplainFn
   ) {}
 
   async load(): Promise<SavedScans> {

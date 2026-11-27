@@ -64,12 +64,12 @@ describe('SavedScansStore', () => {
   })
 
   it('writes only AI answers to disk; offline rulings are recomputed on load', async () => {
-    const store = new SavedScansStore(file, explainPath)
+    const store = new SavedScansStore(file, (p) => explainPath(p))
     const known = item('C:\\Users\\a\\AppData\\Local\\npm-cache')
     known.explanation = { ...ai, source: 'database', whatItIs: 'STALE TEXT THAT MUST NOT BE REUSED', verdict: 'DONT_TOUCH' }
     await store.save({ items: [known], history: {} })
     expect(readFileSync(file, 'utf8')).not.toContain('STALE TEXT')
-    const back = await new SavedScansStore(file, explainPath).load()
+    const back = await new SavedScansStore(file, (p) => explainPath(p)).load()
     expect(back.items[0].explanation).toMatchObject({ source: 'database', matchedId: 'npm-cache', verdict: 'REBUILDS_AUTOMATICALLY' })
   })
 

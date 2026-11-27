@@ -1,9 +1,10 @@
-import type { FolderMetadata } from '../../shared/types'
+import type { FolderMetadata, LargeFile } from '../../shared/types'
 
 const MAX_TEXT = 1024
 const MAX_NAME = 300
 const MAX_SAMPLES = 30
 const MAX_EXTENSIONS = 50
+const MAX_LARGEST = 5
 
 /**
  * The renderer hands us metadata to send to the AI. Check its shape and size first, so the only
@@ -45,7 +46,26 @@ export function validateMetadata(raw: unknown): FolderMetadata {
     }
   }
 
+  const kind = m.kind
+  if (kind !== undefined && kind !== 'folder' && kind !== 'file') throw new Error('Invalid folder data: kind')
+
+  // Only kept when well formed. It is never sent to the AI (the payload is built field by field).
+  let largestFiles: LargeFile[] | undefined
+  if (m.largestFiles !== undefined) {
+    const lf = m.largestFiles
+    if (!Array.isArray(lf) || lf.length > MAX_LARGEST) throw new Error('Invalid folder data: largestFiles')
+    largestFiles = lf.map((f): LargeFile => {
+      const o = typeof f === 'object' && f !== null ? (f as Record<string, unknown>) : {}
+      if (typeof o.path !== 'string' || o.path.length === 0 || o.path.length > MAX_TEXT) throw new Error('Invalid folder data: largestFiles')
+      if (typeof o.sizeBytes !== 'number' || !Number.isFinite(o.sizeBytes) || o.sizeBytes < 0) throw new Error('Invalid folder data: largestFiles')
+      const at = o.modifiedAt
+      if (at !== null && (typeof at !== 'string' || at.length > 40 || Number.isNaN(Date.parse(at)))) throw new Error('Invalid folder data: largestFiles')
+      return { path: o.path, sizeBytes: o.sizeBytes, modifiedAt: at }
+    })
+  }
+
   return {
+    ...(kind === 'file' ? { kind: 'file' as const } : {}),
     path: str('path', MAX_TEXT),
     name: str('name', MAX_NAME),
     sizeBytes: num('sizeBytes'),
@@ -58,6 +78,7 @@ export function validateMetadata(raw: unknown): FolderMetadata {
     newestFileAt: date('newestFileAt'),
     sampleFileNames: samples as string[],
     unreadableCount: 0,
-    linksSkipped: 0
+    linksSkipped: 0,
+    ...(largestFiles && largestFiles.length > 0 ? { largestFiles } : {})
   }
 }

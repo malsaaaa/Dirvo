@@ -16,7 +16,7 @@ export default function ScanStatus({ state, onCancel, onDismissError }: Props): 
     return (
       <div role="alert" className="flex items-start justify-between gap-4 rounded-lg border border-bad-line bg-bad-bg p-5 text-sm text-bad-ink">
         <div>
-          <p className="font-medium">Could not scan that folder</p>
+          <p className="font-medium">Could not explain that</p>
           <p className="mt-1">{state.message}</p>
         </div>
         <Button variant="ghost" onClick={onDismissError}>

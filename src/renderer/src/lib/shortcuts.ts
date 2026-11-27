@@ -98,13 +98,13 @@ export const SHORTCUT_GROUPS: Array<{ title: string; items: ShortcutDoc[] }> = [
   {
     title: 'Move through the results',
     items: [
-      { keys: ['j', 'or', '↓'], label: 'Next folder', example: { key: 'j' }, needsResults: true },
-      { keys: ['k', 'or', '↑'], label: 'Previous folder', example: { key: 'k' }, needsResults: true },
-      { keys: ['Home', 'or', 'End'], label: 'First or last folder', example: { key: 'Home' }, needsResults: true }
+      { keys: ['j', 'or', '↓'], label: 'Next result', example: { key: 'j' }, needsResults: true },
+      { keys: ['k', 'or', '↑'], label: 'Previous result', example: { key: 'k' }, needsResults: true },
+      { keys: ['Home', 'or', 'End'], label: 'First or last result', example: { key: 'Home' }, needsResults: true }
     ]
   },
   {
-    title: 'The selected folder',
+    title: 'The selected result',
     items: [
       { keys: ['o'], label: 'Open in Explorer', example: { key: 'o' }, needsResults: true },
       { keys: ['c'], label: 'Copy its path', example: { key: 'c' }, needsResults: true },

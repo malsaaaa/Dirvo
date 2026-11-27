@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CircleHelp, Download } from 'lucide-react'
 import Button from '../components/Button'
-import DetailCard from '../components/DetailCard'
+import DetailCard, { type FileActions } from '../components/DetailCard'
 import ExplainAllDialog from '../components/ExplainAllDialog'
 import ExportDialog, { type ExportChoice } from '../components/ExportDialog'
 import ReclaimBand from '../components/ReclaimBand'
@@ -27,6 +27,8 @@ interface Props {
   onOpenSettings: () => void
   breakdown: BreakdownControls
   onRescan: (path: string) => void
+  /** What the detail card can do with the biggest files inside a folder. */
+  files: FileActions
   batch: BatchControls
   /** Whether the export dialog is open. Owned by the app so Ctrl+E can open it. */
   exportOpen: boolean
@@ -50,6 +52,7 @@ export default function Results({
   onOpenSettings,
   breakdown,
   onRescan,
+  files,
   batch,
   exportOpen,
   onExportOpenChange,
@@ -67,9 +70,9 @@ export default function Results({
     return (
       <div className="flex max-w-md flex-col items-start gap-2 p-8">
         <h1 className="text-3xl font-medium">Results</h1>
-        <p className="text-ink-2">Scan a folder or a drive and its explanation will show up here.</p>
+        <p className="text-ink-2">Explain a folder or a file, or scan a drive, and the results will show up here.</p>
         <Button variant="primary" onClick={onGoPick} className="mt-4">
-          Explain a folder
+          Explain a folder or file
         </Button>
       </div>
     )
@@ -117,7 +120,7 @@ export default function Results({
         <section className="flex min-w-0 flex-1 flex-col">
           <div className="flex h-14 shrink-0 items-center justify-between pl-4 pr-3">
             <h1 className="text-sm font-medium">
-              Folders{' '}
+              Folders and files{' '}
               <span className="font-mono tabular-nums text-ink-3">
                 {result.filtering ? `${formatCount(result.matched)} of ${formatCount(result.total)}` : formatCount(result.total)}
               </span>
@@ -149,7 +152,7 @@ export default function Results({
           {batch.running && (
             <div className="mx-4 mb-3 flex items-center justify-between gap-3 rounded-lg border border-line bg-hover px-3 py-2 text-xs" role="status" aria-live="polite">
               <span className="min-w-0 truncate">
-                Explaining unknown folders…{' '}
+                Explaining unknown items…{' '}
                 <span className="font-mono tabular-nums text-ink-3">
                   {batch.running.done} of {batch.running.total}
                 </span>
@@ -174,7 +177,7 @@ export default function Results({
                     ? `Stopped after ${batch.result.ok} explained: the AI kept failing. Check Settings, then try again.`
                     : batch.result.stopped === 'cancelled'
                       ? `Cancelled after ${batch.result.ok} explained.`
-                      : `Explained ${batch.result.ok} of ${batch.result.total} folders${batch.result.failed > 0 ? `, ${batch.result.failed} failed` : ''}.`}
+                      : `Explained ${batch.result.ok} of ${batch.result.total} items${batch.result.failed > 0 ? `, ${batch.result.failed} failed` : ''}.`}
               </span>
               <button type="button" onClick={batch.dismissResult} className="shrink-0 rounded-md px-2 py-1 font-medium underline-offset-2 hover:underline">
                 Dismiss
@@ -197,7 +200,7 @@ export default function Results({
           <div className="min-h-0 flex-1 overflow-y-auto">
             {result.rows.length === 0 ? (
               <div className="flex flex-col items-start gap-3 px-4 py-8">
-                <p className="text-sm font-medium">No folders match</p>
+                <p className="text-sm font-medium">Nothing matches</p>
                 <p className="text-sm text-ink-2">Try a different search, or show all rulings.</p>
                 <Button onClick={() => onViewChange({ ...DEFAULT_VIEW, sort: view.sort })}>Clear search and filter</Button>
               </div>
@@ -207,7 +210,7 @@ export default function Results({
                 maxBytes={maxBytes}
                 selectedPath={selected.metadata.path}
                 onSelect={onSelect}
-                label={`Scanned folders, ${SORT_LABELS[view.sort].toLowerCase()}`}
+                label={`Scanned folders and files, ${SORT_LABELS[view.sort].toLowerCase()}`}
               />
             )}
           </div>
@@ -221,6 +224,7 @@ export default function Results({
             onOpenSettings={onOpenSettings}
             breakdown={breakdown}
             onRescan={() => onRescan(selected.metadata.path)}
+            files={files}
           />
         </aside>
       </div>

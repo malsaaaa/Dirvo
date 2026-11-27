@@ -2,15 +2,16 @@
 
 # Dirvo
 
-**Mystery folders, explained.** Dirvo is a Windows desktop app that tells you what a folder is, which app made it, how big it is, whether it is safe to delete, and what happens if you delete it.
+**Mystery folders, explained.** Dirvo is a Windows desktop app that tells you what a folder or file is, which app made it, how big it is, whether it is safe to delete, and what happens if you delete it.
 
-Pick a folder, or scan a whole drive. Dirvo reads only folder metadata (names, sizes, counts and dates), never file contents.
+Pick a folder or a file, or scan a whole drive. Dirvo reads only metadata (names, sizes, counts and dates), never file contents.
 
 > **Dirvo never deletes anything.** It only advises. The only actions are **Open in Explorer** and **Copy path**.
 
 ## Features
 
-- **Explain a folder:** choose a folder with the Windows picker, or paste a path.
+- **Explain a folder or a file:** choose one with the Windows pickers, or paste a path. A file gets the same four rulings: what it is, who made it, whether you can delete it, and what happens if you do.
+- **Files in scans:** a drive scan and **Look inside** also list big files that sit directly in the folders they open (`pagefile.sys`, `hiberfil.sys`, a forgotten installer or disc image), and every scanned folder shows its five **Biggest files**, each with a ruling and an **Explain** button.
 - **Scan a drive:** looks inside Windows, Program Files, ProgramData, user profiles and AppData, scans each folder, and lists the big ones ranked by size.
 - **Reclaimable space:** after a scan, one figure shows how much space sits in folders rated Safe or Rebuilds, and a bar splits everything scanned by verdict. Space is never counted twice when one result is inside another.
 - **Look inside:** on any folder with subfolders, one button scans each subfolder and rules on it separately. The pieces appear indented under their parent, so a big unknown folder can be broken down until the parts are recognised.
@@ -22,7 +23,7 @@ Pick a folder, or scan a whole drive. Dirvo reads only folder metadata (names, s
 - **Search, filter and sort:** find a folder by name, path or who made it, show only one ruling (for example just the Reclaimable ones), and sort by size, name, or how long it has been untouched. Without a search or filter the results stay a tree; while you search or filter they become a flat list.
 - **To clean:** for known folders, Dirvo says how to clean them the safe way: plain steps, a command you can copy (never run for you), or a button that opens the right Windows settings page. For example, `npm cache clean --force` for npm's cache, or Storage settings for Windows Update files.
 - **Colour-coded verdicts:** every folder gets one of four verdicts (see below), plus what it is, what created it, and what happens if you delete it.
-- **Offline first:** about 80 common folders (browser caches, `node_modules`, npm and Gradle caches, Windows Update, Temp, Package Cache, Docker, ...) are recognised with no network.
+- **Offline first:** about 40 well-known files and file types (`pagefile.sys`, `ntuser.dat`, thumbnail caches, crash dumps, documents, photos, videos, archives, disk images, ...) and about 80 common folders (browser caches, `node_modules`, npm and Gradle caches, Windows Update, Temp, Package Cache, Docker, ...) are recognised with no network.
 - **AI for the rest:** unknown folders can be explained by an AI model of your choice, using your own key or a model running on your PC (see [AI providers](#ai-providers)).
 - **Dark by default:** the app opens in a dark theme. Switch to light in **Settings → Appearance**, and your choice is remembered.
 - **Cancelable, with progress:** scans run in worker threads, so the app stays responsive.
@@ -51,7 +52,15 @@ Pick a folder, or scan a whole drive. Dirvo reads only folder metadata (names, s
 
    A **SAFE** or **REBUILDS_AUTOMATICALLY** verdict is also moved to `CAUTION` when the AI's own explanation says deleting will break, lose or uninstall something. Small models sometimes contradict themselves, and the warning in the text wins over the label. These rules are the same for every provider. Answers are cached locally for 30 days, per provider and model.
 
-For a drive scan, Dirvo splits "container" folders (drive root, Windows, Users, a profile, AppData, ...) into their subfolders and scans each one, three at a time. Folders under 50 MB are counted but not listed. Unknown folders get an **Explain with AI** button instead of being sent automatically.
+For a drive scan, Dirvo splits "container" folders (drive root, Windows, Users, a profile, AppData, ...) into their subfolders and scans each one, three at a time. Folders under 50 MB are counted but not listed. Unknown folders get an **Explain with AI** button instead of being sent automatically. Files that sit directly inside the folders it opens are listed too when they are over the size limit, and each scanned folder keeps its five biggest files.
+
+**Files** follow the same path with their own rules ([`data/known-files.json`](data/known-files.json)):
+
+1. A file inside the Windows or Program Files trees is `DONT_TOUCH`, unless an entry written for that exact system path says otherwise (for example `C:\Windows\MEMORY.DMP`).
+2. A file the database knows by name: `pagefile.sys`, `hiberfil.sys`, `ntuser.dat`, `Thumbs.db`, `Windows.edb`, SSH keys, ...
+3. The folder it sits in. Anything inside `Temp` or `node_modules` follows that folder.
+4. Its type, from the extension. A type that can hold your own work (documents, photos, videos, music, archives, databases, virtual disks, source code) is never rated Safe. Keys, certificates and password vaults are `DONT_TOUCH`.
+5. Anything left goes to the AI as a file, with its own prompt, and the same confidence rules as folders.
 
 ## AI providers
 
@@ -77,6 +86,7 @@ Pick one in **Settings**. Each provider keeps its own encrypted key, so you can 
 ## Privacy and security
 
 - Only for unknown folders, and only after you choose a provider (and add its key, if it needs one): the folder name and path, size, file and folder counts, file-type counts, dates, and up to 30 sample file names.
+- For an unknown file: its name, full path, extension, size and dates. A file name can say a lot about you, so look at what you are about to send. The contents are never read.
 - Your Windows username is replaced with `<USER>` in everything sent, including inside file names.
 - File contents are never read or sent.
 - The AI is called from the main process only. Each API key is encrypted with Electron `safeStorage` (Windows DPAPI, tied to your Windows account), is sent only in a request header to its own provider, is never sent back to the UI, and is never stored in plain text. If Windows encryption is unavailable, Dirvo refuses to save a key.
@@ -132,6 +142,7 @@ The packaged app and the installer have been tested on Windows 11: a clean insta
 
 ```
 data/known-folders.json     Offline known-folder database
+data/known-files.json       Offline known-file and file-type database
 src/main/                   Electron main process
   scanner/                  Metadata scanner, worker thread, drive scan orchestrator
   knowledge/                Path patterns, database matcher, system-path rules
@@ -144,7 +155,7 @@ tests/                      Vitest tests
 
 ## Tests
 
-`npm test` covers the scanner, the path matcher and database, the system-path rules, the drive scan logic, and the AI layer (redaction, response validation, confidence policy, key storage, cache and service, all with a fake network).
+`npm test` covers the scanner, single-file inspection, the locked-file fallback, the file rules, the path matcher and database, the system-path rules, the drive scan logic, and the AI layer (redaction, response validation, confidence policy, key storage, cache and service, all with a fake network).
 
 The AI layer is tested with a fake network for every provider's request and response format. It has **not** been run against the hosted APIs with real keys. Only Anthropic's "key rejected" error path was checked against its real endpoint. Ollama was tested end to end with a real local model (`qwen3.5:4b`): connection test, explanation of an unknown folder, and the "not running" error. That run showed that thinking models can use their whole output budget before answering, which is why Dirvo turns thinking off for Ollama and gives every provider a large output budget. It also showed a 4B model can give shaky explanations, which is what the contradiction check is for. The default model names for hosted providers are best guesses, so verify them with **Test connection**.
 
@@ -181,7 +192,9 @@ Add an entry to [`data/known-folders.json`](data/known-folders.json):
 - Windows only.
 - A drive scan reports a big unknown folder as one item. Use **Look inside** on it to break it down one level at a time.
 - Sizes are the sum of file sizes. Folders that share files between copies (such as `WinSxS`) can differ from what Explorer reports.
-- Files sitting directly inside container folders (such as `pagefile.sys`) are not listed in a drive scan.
+- A drive scan lists a file only when it sits directly inside a folder the scan opens (the drive root, Windows, Users, a profile, AppData, ...). A file deeper down is part of its folder's size and appears in that folder's **Biggest files** (up to five per folder).
+- Windows keeps `pagefile.sys`, `hiberfil.sys` and `swapfile.sys` locked, so Node cannot open them even to read the size. For those, and only those, Dirvo reads the size from the folder listing by starting PowerShell once, with a fixed read-only script. The names reach it through environment variables, never the command line. If PowerShell is missing, those files are simply not listed.
+- A file's ruling comes from its name, its folder and its extension. Dirvo never looks inside it, so a `.txt` that holds something precious is rated by type, not by what it says.
 - The installer is not code-signed, so Windows SmartScreen warns about it. There is no auto-update: install a newer setup over the old one to update.
 - Only 64-bit Windows is built.
 

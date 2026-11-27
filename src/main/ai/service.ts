@@ -5,8 +5,8 @@ import { AiRequestError, callLlm } from './client'
 import type { KeyStore } from './key-store'
 import { validateMetadata } from './metadata-validate'
 import type { AiSettingsStore } from './provider-settings'
-import { buildUserMessage, PROMPT_VERSION, SYSTEM_PROMPT } from './prompt'
-import { buildPayload } from './sanitize'
+import { buildFileUserMessage, buildUserMessage, FILE_SYSTEM_PROMPT, PROMPT_VERSION, SYSTEM_PROMPT } from './prompt'
+import { buildFilePayload, buildPayload } from './sanitize'
 import { AiValidationError, parseAiAnswer, toExplanation } from './validate'
 
 export interface AiServiceDeps {
@@ -20,20 +20,33 @@ export interface AiServiceDeps {
 }
 
 /**
- * Explains an unknown folder with the chosen AI provider. Order: validate input, redact username,
+ * Explains an unknown folder or file with the chosen AI provider. Order: validate input, redact username,
  * check the cache, call the API, validate the reply, cache it, then apply the confidence policy.
  * The same steps run for every provider.
  */
 export async function explainWithAi(rawMetadata: unknown, deps: AiServiceDeps): Promise<AiExplainResult> {
-  let payload
+  let payload: { path: string }
+  let system = SYSTEM_PROMPT
+  let user: string
   try {
-    payload = buildPayload(validateMetadata(rawMetadata), deps.usernames())
+    const meta = validateMetadata(rawMetadata)
+    if (meta.kind === 'file') {
+      const filePayload = buildFilePayload(meta, deps.usernames())
+      payload = filePayload
+      system = FILE_SYSTEM_PROMPT
+      user = buildFileUserMessage(filePayload)
+    } else {
+      const folderPayload = buildPayload(meta, deps.usernames())
+      payload = folderPayload
+      user = buildUserMessage(folderPayload)
+    }
   } catch (err) {
     return { status: 'error', message: err instanceof Error ? err.message : 'Invalid folder data' }
   }
 
   const cfg = await deps.settings.resolve()
-  const key = cacheKey(payload.path, PROMPT_VERSION, `${cfg.provider.id}/${cfg.model}`)
+  // Files and folders are asked with different prompts, so they never share a cached answer.
+  const key = cacheKey(payload.path, PROMPT_VERSION, `${system === FILE_SYSTEM_PROMPT ? 'file/' : ''}${cfg.provider.id}/${cfg.model}`)
   const cached = await deps.cache.get(key)
   if (cached) return { status: 'ok', explanation: toExplanation(cached), cached: true }
 
@@ -46,8 +59,8 @@ export async function explainWithAi(rawMetadata: unknown, deps: AiServiceDeps): 
       model: cfg.model,
       baseUrl: cfg.baseUrl,
       apiKey,
-      system: SYSTEM_PROMPT,
-      user: buildUserMessage(payload),
+      system,
+      user,
       fetchImpl: deps.fetchImpl
     })
     const answer = parseAiAnswer(text)

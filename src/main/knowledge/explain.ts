@@ -6,7 +6,7 @@ import { matchProtectedFolder, matchProtectedTree } from './system-paths'
 let defaultMatcher: Matcher | undefined
 
 /** Validated once, on first use. A broken database fails loudly here instead of giving bad advice. */
-function getDefaultMatcher(): Matcher {
+export function getDefaultMatcher(): Matcher {
   defaultMatcher ??= createMatcher(validateDatabase(knownFoldersJson))
   return defaultMatcher
 }
