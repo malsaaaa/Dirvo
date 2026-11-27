@@ -375,7 +375,7 @@ export default function App(): React.JSX.Element {
             <Logo size={24} className="text-ink" />
             Dirvo
           </p>
-          <p className="mt-1 text-xs text-ink-3">Mystery folders, explained</p>
+          <p className="mt-1 text-balance text-xs text-ink-3">Mystery folders and files, explained</p>
         </div>
         {NAV.map(({ id, label, Icon }) => (
           <button
