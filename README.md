@@ -114,8 +114,19 @@ To use AI explanations, open **Settings**, pick a provider and paste its API key
 | `npm test` | Run the test suite once |
 | `npm run test:watch` | Run tests in watch mode |
 | `npm run icons` | Regenerate `resources/icon.png` and `resources/icon.ico` from `resources/logo.svg` |
+| `npm run pack` | Build the app unpacked into `release/win-unpacked/` (fast, for testing the packaged app) |
+| `npm run dist` | Typecheck, build, and make the Windows installer in `release/` |
 
-Dirvo is not packaged as an installer yet. Run it from source as above.
+## Installing
+
+`npm run dist` creates `release/Dirvo-Setup-0.1.0.exe` (about 116 MB, because it carries its own copy of Electron).
+
+- **No administrator rights needed.** It installs for the current user, by default into `%LOCALAPPDATA%\Programs\Dirvo`, and you can pick another folder. It adds Desktop and Start Menu shortcuts and an entry in Windows Settings → Apps.
+- **Uninstalling** removes the program, the shortcuts and the Apps entry. It **keeps** your saved scans, settings and API keys in `%APPDATA%\dirvo`; delete that folder to remove them too.
+- **Windows SmartScreen will warn** ("Windows protected your PC") because the installer is not code-signed. Choose **More info → Run anyway**. Signing needs a code-signing certificate, which is paid for.
+- **Silent install:** `Dirvo-Setup-0.1.0.exe /S`. Silent uninstall: run `Uninstall Dirvo.exe /currentuser /S` from the install folder.
+
+The packaged app and the installer have been tested on Windows 11: a clean install, launch, scan, and uninstall.
 
 ## Project layout
 
@@ -171,7 +182,8 @@ Add an entry to [`data/known-folders.json`](data/known-folders.json):
 - A drive scan reports a big unknown folder as one item. Use **Look inside** on it to break it down one level at a time.
 - Sizes are the sum of file sizes. Folders that share files between copies (such as `WinSxS`) can differ from what Explorer reports.
 - Files sitting directly inside container folders (such as `pagefile.sys`) are not listed in a drive scan.
-- No installer or auto-update yet.
+- The installer is not code-signed, so Windows SmartScreen warns about it. There is no auto-update: install a newer setup over the old one to update.
+- Only 64-bit Windows is built.
 
 ## License
 
